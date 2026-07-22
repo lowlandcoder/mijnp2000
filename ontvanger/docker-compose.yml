@@ -1,0 +1,22 @@
+# Compose-bestand voor de P2000-ontvanger, bruikbaar als stack in Portainer.
+# Vul de MQTT-instellingen in bij 'environment' (het adres van de bestaande
+# broker) en controleer dat de USB-stick wordt doorgegeven onder 'devices'.
+
+services:
+  p2000-ontvanger:
+    build: .
+    # Of een vooraf gebouwd image, als dat naar een register is gepusht:
+    # image: ghcr.io/lowlandcoder/p2000-ontvanger:latest
+    container_name: p2000-ontvanger
+    restart: unless-stopped
+    environment:
+      MQTT_HOST: "192.168.2.38"      # lab023-server, waar Mosquitto draait
+      MQTT_PORT: "1883"
+      MQTT_TOPIC: "p2000/bericht"
+      MQTT_USER: "lab023"
+      MQTT_PASSWORD: "${MQTT_PASSWORD:?stel MQTT_PASSWORD in via .env}"  # uit .env, niet in git
+      # RTL_CMD: "rtl_fm -f 169.65M -M fm -s 22050 -l 0 -g 20"   # gain toevoegen bij matige ontvangst
+    devices:
+      # De RTL-SDR-stick doorgeven aan de container. Controleer het pad met
+      # 'ls -l /dev/bus/usb' op de sdr-server; vaak volstaat de hele usb-bus.
+      - "/dev/bus/usb:/dev/bus/usb"

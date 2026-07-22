@@ -1,0 +1,5 @@
+Thumbs.db
+.DS_Store
+
+# Geheimen: het wachtwoord blijft buiten de repository.
+.env
