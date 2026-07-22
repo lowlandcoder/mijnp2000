@@ -33,11 +33,24 @@ instelbaar via `RETENTIE_DAGEN`) worden elk uur verwijderd.
 Het filteren op regio werkt alleen met een capcode-database. Zonder die database
 worden de meldingen wel opgeslagen en getoond, maar blijft het regioveld leeg.
 
-Zet een bestand `data/capcodes.csv` neer met vier kolommen: `capcode`, `regio`,
-`discipline`, `plaats`. Zie `data/capcodes.voorbeeld.csv` voor de opmaak. Een
-openbare bron is de capcodelijst van tomzulu10capcodes.nl of het bestand
-`db_capcodes.txt` uit het project cyberjunky/RTL-SDR-P2000Receiver-HA; zet die
-om naar deze vier kolommen. Na het plaatsen de container herstarten.
+Het bestand `data/capcodes.csv` is meegeleverd, met vier kolommen: `capcode`,
+`regio`, `discipline`, `plaats`. Het is omgezet uit de openbare lijst
+`db_capcodes.txt` van cyberjunky/RTL-SDR-P2000Receiver-HA. Let op: die lijst
+dekt alleen het noordwesten (Amsterdam-Amstelland, Kennemerland, Noord-Holland,
+Noord-Holland Noord, Zaanstreek-Waterland). Meldingen uit andere regio's krijgen
+dus voorlopig geen regio.
+
+Voor landelijke dekking is een vollere bron nodig, bijvoorbeeld de capcodelijst
+van tomzulu10capcodes.nl. Zet die met dezelfde kolommen om naar `capcodes.csv`
+met de omzetter:
+
+    python3 tools/converteer_capcodes.py db_capcodes.txt data/capcodes.csv
+
+Na het vervangen van `capcodes.csv` de container herstarten:
+
+    sudo docker compose restart mijnp2000-archief
+
+Het aantal geladen capcodes staat in het logboek bij het opstarten.
 
 ## Instellingen
 
