@@ -1,0 +1,18 @@
+capcode,regio,discipline,plaats
+# Voorbeeldbestand. Kopieer naar capcodes.csv en vul met een echte
+# capcode-database om filteren op regio te laten werken.
+#
+# Kolommen: capcode (9 cijfers, met voorloopnullen), regio, discipline, plaats.
+# Regels die met # beginnen worden overgeslagen.
+#
+# Zonder dit bestand worden alle meldingen wel opgeslagen en getoond, maar
+# blijft het veld regio leeg en heeft het regiofilter geen inhoud.
+#
+# Een openbare bron voor de vertaling is bijvoorbeeld de capcodelijst van
+# tomzulu10capcodes.nl of het bestand db_capcodes.txt uit het project
+# cyberjunky/RTL-SDR-P2000Receiver-HA. Zet die om naar deze vier kolommen.
+#
+# De regels hieronder zijn slechts voorbeelden van de opmaak, geen echte data:
+000923993,Landelijk,Ambulance,Lifeliner
+002029572,Midden- en West-Brabant,Ambulance,Breda
+000820123,Noord- en Oost-Gelderland,Ambulance,Apeldoorn

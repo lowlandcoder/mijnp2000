@@ -3,3 +3,8 @@ Thumbs.db
 
 # Geheimen: het wachtwoord blijft buiten de repository.
 .env
+
+# Gegevens van de archiefbackend: de database en de echte capcode-lijst.
+archief/data/*.db
+archief/data/*.db-*
+archief/data/capcodes.csv

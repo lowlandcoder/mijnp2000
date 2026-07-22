@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#061225">
+  <meta name="description" content="Archief van P2000-meldingen van de hulpdiensten, met filter op regio en periode.">
+  <title>Lab023 — MijnP2000</title>
+  <link rel="stylesheet" href="huisstijl.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1 class="merk">Mijn<em>P2000</em></h1>
+        <p class="ondertitel">Meldingen van de hulpdiensten, ontvangen op de sdr-server.</p>
+      </div>
+      <div class="klok" id="klok" aria-hidden="true"></div>
+    </header>
+
+    <div class="filters">
+      <label class="filter">
+        <span>Regio</span>
+        <select id="regio">
+          <option value="">Alle regio's</option>
+        </select>
+      </label>
+      <label class="filter">
+        <span>Periode</span>
+        <select id="periode">
+          <option value="1">Laatste uur</option>
+          <option value="6">Laatste 6 uur</option>
+          <option value="24" selected>Laatste 24 uur</option>
+          <option value="72">Laatste 3 dagen</option>
+          <option value="168">Laatste 7 dagen</option>
+        </select>
+      </label>
+      <label class="filter filter-zoek">
+        <span>Zoeken</span>
+        <input id="zoek" type="text" placeholder="Woord in de melding…" autocomplete="off">
+      </label>
+      <label class="filter filter-auto">
+        <span>Verversen</span>
+        <input id="auto" type="checkbox" checked>
+      </label>
+    </div>
+
+    <p id="stand" class="stand"></p>
+    <div id="lijst" class="lijst"></div>
+    <p id="leeg" class="leeg" hidden>Geen meldingen in deze selectie.</p>
+
+    <p class="voettekst">Afgeschermd, voor eigen gebruik. Meldingen kunnen persoonsgegevens bevatten.</p>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

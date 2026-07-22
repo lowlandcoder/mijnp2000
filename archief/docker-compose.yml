@@ -1,0 +1,22 @@
+# Compose-bestand voor de P2000-archiefbackend.
+# Deze container draait op de lab023-server, naast nginx en de broker.
+# Vul het wachtwoord in via een .env-bestand (zie .env.voorbeeld), dat buiten
+# de repository blijft.
+
+services:
+  mijnp2000-archief:
+    build: .
+    container_name: mijnp2000-archief
+    restart: unless-stopped
+    environment:
+      MQTT_HOST: "192.168.2.38"      # lab023-server, waar Mosquitto draait
+      MQTT_PORT: "1883"
+      MQTT_TOPIC: "p2000/bericht"
+      MQTT_USER: "admin_mosquitto"
+      MQTT_PASSWORD: "${MQTT_PASSWORD:?stel MQTT_PASSWORD in via .env}"
+      RETENTIE_DAGEN: "7"            # bewaartermijn; instelbaar
+    ports:
+      # Alleen op localhost; nginx schakelt door naar deze poort.
+      - "127.0.0.1:8200:8000"
+    volumes:
+      - ./data:/app/data

@@ -20,14 +20,16 @@ met verplichte aanmelding.
 ## Onderdelen
 
 - `ontvanger/` — de P2000-ontvangercontainer. Zie `ontvanger/README.md`.
-- (volgt) `archief/` — de backend en de pagina `mijnp2000.lab023.nl`.
+- `archief/` — de backend en de pagina `mijnp2000.lab023.nl`. Zie
+  `archief/README.md`.
 
 ## Stand van zaken
 
 - [x] Broker met wachtwoord en open poort (in de stack `mijnhuis`).
 - [x] Ontvangercontainer gebouwd (rtl-sdr-blog-stuurprogramma voor de V4).
 - [x] Ontvanger uitgerold en getest op de sdr-server; meldingen op MQTT.
-- [ ] Archiefpagina met database en regiofilter.
+- [x] Archiefpagina met database en regiofilter gebouwd.
+- [ ] Archiefpagina uitgerold op de lab023-server en capcode-lijst geplaatst.
 - [ ] Home Assistant als afnemer met meldingen naar de telefoon.
 
 ## Eén stick
