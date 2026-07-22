@@ -4,15 +4,16 @@
 Herkent twee openbare bronnen automatisch:
 
   * p2000.bommel.net (landelijk), export via https://p2000.bommel.net/cap2csv.php
-    kolommen o.a.: Code, Discipline, Regio, Korps/sector, Plaats, Omschrijving
+    Puntkomma-gescheiden, met aanhalingstekens en zonder kopregel. Vaste
+    kolomvolgorde: Code; Discipline; Regio; Plaats; Omschrijving; Short.
   * cyberjunky/RTL-SDR-P2000Receiver-HA (db_capcodes.txt)
-    kolommen: capcode, discipline, region, location, description, remark
+    Komma-gescheiden, met kopregel: capcode, discipline, region, location, ...
 
 De uitvoer heeft de vier kolommen die de backend verwacht:
     capcode,regio,discipline,plaats
 
 De capcode wordt links met nullen aangevuld tot negen cijfers, zodat die
-overeenkomt met wat de ontvanger publiceert (bijvoorbeeld 1500122 -> 001500122).
+overeenkomt met wat de ontvanger publiceert (bijvoorbeeld 0100000 -> 000100000).
 
 Gebruik:
     python3 converteer_capcodes.py <bron.csv> <uitvoer.csv>
@@ -22,15 +23,6 @@ import csv
 import sys
 
 
-def kolom(velden, *namen):
-    """Vind de kolomnaam die overeenkomt met een van de gegeven namen."""
-    laag = {v.lower().strip(): v for v in velden}
-    for naam in namen:
-        if naam in laag:
-            return laag[naam]
-    return None
-
-
 def main():
     if len(sys.argv) != 3:
         print("Gebruik: converteer_capcodes.py <bron.csv> <uitvoer.csv>")
@@ -38,46 +30,59 @@ def main():
     bron, uitvoer = sys.argv[1], sys.argv[2]
 
     with open(bron, encoding="utf-8", errors="replace") as bestand:
-        tekst = bestand.read()
-
-    # Sla eventuele voorregels vóór de kopregel over.
-    regels = tekst.splitlines()
-    start = 0
-    for i, regel in enumerate(regels):
-        laag = regel.lower()
-        if ("capcode" in laag or "code" in laag) and ("regio" in laag or "region" in laag):
-            start = i
-            break
-    schoon = "\n".join(regels[start:])
-
-    # Scheidingsteken raden (komma, puntkomma of tab).
-    try:
-        dialect = csv.Sniffer().sniff(schoon[:2000], delimiters=",;\t")
-    except csv.Error:
-        dialect = csv.excel
-
-    lezer = csv.DictReader(schoon.splitlines(), dialect=dialect)
-    velden = lezer.fieldnames or []
-    k_code = kolom(velden, "capcode", "code")
-    k_regio = kolom(velden, "regio", "region")
-    k_disc = kolom(velden, "discipline")
-    k_plaats = kolom(velden, "plaats", "location")
-    if not k_code:
-        print("Geen capcode-kolom gevonden. Kopregel:", velden)
+        regels = bestand.read().splitlines()
+    regels = [r for r in regels if r.strip()]
+    if not regels:
+        print("Bronbestand is leeg.")
         sys.exit(1)
 
+    # Scheidingsteken bepalen aan de hand van de eerste regel.
+    delim = ";" if regels[0].count(";") >= regels[0].count(",") else ","
+    rijen_ruw = list(csv.reader(regels, delimiter=delim))
+
+    # Is er een kopregel? (bevat 'code' of 'capcode')
+    kop = [c.strip().lower() for c in rijen_ruw[0]]
+    heeft_kop = any(c in ("code", "capcode") for c in kop)
+
+    if heeft_kop:
+        index = {naam: i for i, naam in enumerate(kop)}
+
+        def zoek(rij, *namen):
+            for naam in namen:
+                i = index.get(naam)
+                if i is not None and i < len(rij):
+                    return rij[i]
+            return ""
+
+        databron = rijen_ruw[1:]
+
+        def velden(rij):
+            return (
+                zoek(rij, "capcode", "code"),
+                zoek(rij, "regio", "region"),
+                zoek(rij, "discipline"),
+                zoek(rij, "plaats", "location"),
+            )
+    else:
+        # bommel-volgorde: code; discipline; regio; plaats; omschrijving; short
+        databron = rijen_ruw
+
+        def velden(rij):
+            haal = lambda i: rij[i] if i < len(rij) else ""
+            return haal(0), haal(2), haal(1), haal(3)
+
     rijen = []
-    for rij in lezer:
-        ruw = (rij.get(k_code) or "").strip()
-        cijfers = "".join(c for c in ruw if c.isdigit())
+    for rij in databron:
+        code, regio, discipline, plaats = velden(rij)
+        cijfers = "".join(c for c in code if c.isdigit())
         if not cijfers:
             continue
         rijen.append(
             {
                 "capcode": cijfers.zfill(9),
-                "regio": (rij.get(k_regio) or "").strip() if k_regio else "",
-                "discipline": (rij.get(k_disc) or "").strip() if k_disc else "",
-                "plaats": (rij.get(k_plaats) or "").strip() if k_plaats else "",
+                "regio": regio.strip(),
+                "discipline": discipline.strip(),
+                "plaats": plaats.strip(),
             }
         )
 
