@@ -9,5 +9,14 @@ set -e
 
 RTL_CMD="${RTL_CMD:-rtl_fm -f 169.65M -M fm -s 22050 -l 0}"
 
+# DEBUG=1 laat de meldingen van rtl_fm en multimon-ng in de logs zien
+# (afstemmen, apparaat openen, decoderen). Handig om te controleren of de
+# stick werkt. Zet op 0 zodra alles loopt, om de logs rustig te houden.
+DEBUG="${DEBUG:-1}"
+
 echo "P2000-ontvanger start: ${RTL_CMD} | multimon-ng -a FLEX"
-exec sh -c "${RTL_CMD} 2>/dev/null | multimon-ng -a FLEX -t raw /dev/stdin 2>/dev/null | python3 -u /app/publiceer.py"
+if [ "${DEBUG}" = "1" ]; then
+    exec sh -c "${RTL_CMD} | multimon-ng -a FLEX -t raw /dev/stdin | python3 -u /app/publiceer.py"
+else
+    exec sh -c "${RTL_CMD} 2>/dev/null | multimon-ng -a FLEX -t raw /dev/stdin 2>/dev/null | python3 -u /app/publiceer.py"
+fi
