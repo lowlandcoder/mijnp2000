@@ -20,12 +20,13 @@
     </header>
 
     <div class="filters">
-      <label class="filter">
+      <div class="filter">
         <span>Regio</span>
-        <select id="regio">
-          <option value="">Alle regio's</option>
-        </select>
-      </label>
+        <details class="regio-menu" id="regioMenu">
+          <summary id="regioSamenvatting">Alle regio's</summary>
+          <div class="regio-opties" id="regioOpties"></div>
+        </details>
+      </div>
       <label class="filter">
         <span>Periode</span>
         <select id="periode">
@@ -40,6 +41,12 @@
         <span>Zoeken</span>
         <input id="zoek" type="text" placeholder="Woord in de melding…" autocomplete="off">
       </label>
+      <div class="filter filter-knop">
+        <span>Kaart</span>
+        <a class="kaartknop" href="https://p2000.page/live-kaart" target="_blank" rel="noopener">
+          Heel Nederland
+        </a>
+      </div>
       <label class="filter filter-auto">
         <span>Verversen</span>
         <input id="auto" type="checkbox" checked>

@@ -1,6 +1,14 @@
 /* Pagina-eigen opmaak voor MijnP2000.
    De gedeelde huisstijl staat in huisstijl.css en wordt eerder ingeladen. */
 
+:root {
+  --brandweer: #ff6b6b;   /* rood */
+  --ambulance: #ffd43b;   /* geel */
+  --politie:   #4dabf7;   /* blauw (gelijk aan accent) */
+  --lifeliner: #69db7c;   /* groen */
+  --overig:    #9db0c9;   /* grijs voor onbekend/overig */
+}
+
 .topbar {
   display: flex;
   align-items: flex-start;
@@ -26,6 +34,7 @@
 .filters {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-end;
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -36,7 +45,7 @@
   font-size: 12px;
   color: var(--muted);
 }
-.filter-zoek { flex: 1 1 200px; }
+.filter-zoek { flex: 1 1 180px; }
 .filter select,
 .filter input[type="text"] {
   color: var(--tekst);
@@ -48,14 +57,69 @@
 }
 .filter input[type="text"] { width: 100%; }
 .filter select:focus,
-.filter input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-.filter-auto {
-  justify-content: flex-end;
-}
+.filter input:focus { outline: none; border-color: var(--accent); }
+.filter-auto { justify-content: flex-end; }
 .filter-auto input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+/* Regio-keuzemenu met meerdere selecties */
+.regio-menu {
+  position: relative;
+}
+.regio-menu summary {
+  list-style: none;
+  cursor: pointer;
+  color: var(--tekst);
+  background: rgba(5, 18, 39, .55);
+  border: 1px solid var(--rand);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+  min-width: 150px;
+  white-space: nowrap;
+}
+.regio-menu summary::-webkit-details-marker { display: none; }
+.regio-menu[open] summary { border-color: var(--accent); }
+.regio-opties {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  min-width: 220px;
+  padding: 8px;
+  background: #0b1f3a;
+  border: 1px solid var(--rand);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .45);
+}
+.regio-optie {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: 8px;
+  color: var(--tekst);
+  font-size: 13px;
+  cursor: pointer;
+}
+.regio-optie:hover { background: rgba(255, 255, 255, .05); }
+.regio-optie input { accent-color: var(--accent); }
+
+/* Kaartknop */
+.filter-knop { justify-content: flex-end; }
+.kaartknop {
+  display: inline-block;
+  color: var(--tekst);
+  text-decoration: none;
+  background: rgba(77, 171, 247, .14);
+  border: 1px solid rgba(77, 171, 247, .4);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.kaartknop:hover { background: rgba(77, 171, 247, .24); }
 
 .stand {
   color: var(--muted);
@@ -64,14 +128,11 @@
 }
 
 /* Lijst met meldingen */
-.lijst {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+.lijst { display: flex; flex-direction: column; gap: 10px; }
 .melding {
-  padding: 14px 16px;
+  padding: 12px 14px 12px 16px;
   border: 1px solid var(--rand);
+  border-left: 4px solid var(--overig);   /* kleur per discipline, via JS */
   border-radius: 14px;
   background: var(--kaart);
 }
@@ -87,17 +148,47 @@
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
-.melding-tekst {
-  font-size: 14px;
-  line-height: 1.5;
+.melding.hoofd-brandweer { border-left-color: var(--brandweer); }
+.melding.hoofd-ambulance { border-left-color: var(--ambulance); }
+.melding.hoofd-politie   { border-left-color: var(--politie); }
+.melding.hoofd-lifeliner { border-left-color: var(--lifeliner); }
+
+.melding-tekst { font-size: 14px; line-height: 1.5; }
+
+/* Kaartpin per melding */
+.pin {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: var(--accent);
+  background: rgba(77, 171, 247, .12);
+  border: 1px solid rgba(77, 171, 247, .3);
 }
-.melding-onder {
-  margin-top: 6px;
+.pin:hover { background: rgba(77, 171, 247, .24); }
+.pin svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Capcodes met vertaling */
+.codes {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.code-regel {
   color: var(--muted);
   font-size: 11.5px;
+  line-height: 1.4;
+}
+.code-nr {
+  color: var(--tekst);
+  font-variant-numeric: tabular-nums;
+  margin-right: 6px;
 }
 
-/* Kenmerken (regio, discipline, prioriteit) */
+/* Kenmerken (prioriteit, regio, discipline) */
 .kenmerk {
   font-size: 10.5px;
   font-weight: 600;
@@ -108,8 +199,14 @@
   color: var(--muted);
 }
 .kenmerk.prio1 { color: #ff8787; border-color: rgba(255, 135, 135, .5); }
-.kenmerk.prio2 { color: var(--gas); border-color: rgba(244, 162, 97, .5); }
+.kenmerk.prio2 { color: var(--ambulance); border-color: rgba(255, 212, 59, .5); }
 .kenmerk.regio { color: var(--accent); border-color: rgba(77, 171, 247, .5); }
+
+/* Disciplinebadge in de steunkleur */
+.kenmerk.disc-brandweer { color: var(--brandweer); border-color: rgba(255, 107, 107, .5); }
+.kenmerk.disc-ambulance { color: var(--ambulance); border-color: rgba(255, 212, 59, .5); }
+.kenmerk.disc-politie   { color: var(--politie);   border-color: rgba(77, 171, 247, .5); }
+.kenmerk.disc-lifeliner { color: var(--lifeliner); border-color: rgba(105, 219, 124, .5); }
 
 .leeg {
   color: var(--muted);

@@ -88,6 +88,7 @@ def laad_capcodes():
                     "regio": (rij.get("regio") or "").strip(),
                     "discipline": (rij.get("discipline") or "").strip(),
                     "plaats": (rij.get("plaats") or "").strip(),
+                    "omschrijving": (rij.get("omschrijving") or "").strip(),
                 }
     capcodes_map = nieuw
 
@@ -190,9 +191,34 @@ def api_regios():
     return jsonify(sorted(regios))
 
 
+def details_van_capcodes(capcodes_tekst):
+    """Zet de opgeslagen capcode-string om naar een lijst met details per code,
+    en bepaalt de eerste bekende plaats (voor de kaartverwijzing)."""
+    codes = []
+    plaats = ""
+    for code in (capcodes_tekst or "").split():
+        info = capcodes_map.get(code, {})
+        if info.get("plaats") and not plaats:
+            plaats = info["plaats"]
+        codes.append(
+            {
+                "capcode": code,
+                "regio": info.get("regio", ""),
+                "discipline": info.get("discipline", ""),
+                "plaats": info.get("plaats", ""),
+                "omschrijving": info.get("omschrijving", ""),
+            }
+        )
+    return codes, plaats
+
+
 @app.route("/api/meldingen")
 def api_meldingen():
-    regio = request.args.get("regio", "").strip()
+    # Regio's: 'regios' (komma-gescheiden, meerdere) of 'regio' (enkel).
+    regios = [r.strip() for r in request.args.get("regios", "").split(",") if r.strip()]
+    enkel = request.args.get("regio", "").strip()
+    if enkel and enkel not in regios:
+        regios.append(enkel)
     uren = request.args.get("uren", "").strip()
     zoek = request.args.get("zoek", "").strip()
     try:
@@ -208,9 +234,11 @@ def api_meldingen():
             params.append(grens)
         except ValueError:
             pass
-    if regio:
-        voorwaarden.append("regios LIKE ?")
-        params.append(f"%{regio}%")
+    if regios:
+        # OR: een melding hoort bij een van de gekozen regio's.
+        deel = " OR ".join("regios LIKE ?" for _ in regios)
+        voorwaarden.append(f"({deel})")
+        params.extend(f"%{r}%" for r in regios)
     if zoek:
         voorwaarden.append("bericht LIKE ?")
         params.append(f"%{zoek}%")
@@ -225,7 +253,13 @@ def api_meldingen():
         conn = get_db()
         rijen = conn.execute(query, params).fetchall()
         conn.close()
-    return jsonify([dict(rij) for rij in rijen])
+
+    uitvoer = []
+    for rij in rijen:
+        melding = dict(rij)
+        melding["codes"], melding["plaats"] = details_van_capcodes(melding.get("capcodes", ""))
+        uitvoer.append(melding)
+    return jsonify(uitvoer)
 
 
 def main():

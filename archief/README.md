@@ -24,33 +24,37 @@ MQTT; deze backend is een van de afnemers.
 De backend houdt één verbinding met de broker open en schrijft elke melding weg
 in `data/p2000.db`. Bij het opslaan worden de capcodes vertaald naar regio en
 discipline met `data/capcodes.csv`. De pagina haalt de meldingen op via de
-API en toont ze, nieuwste bovenaan, met filter op regio, periode en een
-zoekwoord. Meldingen ouder dan de bewaartermijn (standaard zeven dagen,
-instelbaar via `RETENTIE_DAGEN`) worden elk uur verwijderd.
+API en toont ze, nieuwste bovenaan. Mogelijkheden op de pagina:
+
+- filteren op meerdere regio's tegelijk, op periode en op een zoekwoord;
+- een steunkleur per discipline (brandweer rood, ambulance geel, politie blauw,
+  lifeliner groen), zowel in de badge als in de rand van de melding;
+- een kaartpin per melding die de locatie in Google Maps opent;
+- een knop naar de landelijke live-kaart van p2000.page;
+- de vertaling per capcode (eenheid, plaats en regio) onder elke melding.
+
+Meldingen ouder dan de bewaartermijn (standaard zeven dagen, instelbaar via
+`RETENTIE_DAGEN`) worden elk uur verwijderd.
 
 ## Capcode-database: nodig voor het regiofilter
 
 Het filteren op regio werkt alleen met een capcode-database. Zonder die database
 worden de meldingen wel opgeslagen en getoond, maar blijft het regioveld leeg.
 
-Het bestand `data/capcodes.csv` is meegeleverd, met vier kolommen: `capcode`,
-`regio`, `discipline`, `plaats`. Het is omgezet uit de openbare lijst
-`db_capcodes.txt` van cyberjunky/RTL-SDR-P2000Receiver-HA. Let op: die lijst
-dekt alleen het noordwesten (Amsterdam-Amstelland, Kennemerland, Noord-Holland,
-Noord-Holland Noord, Zaanstreek-Waterland). Meldingen uit andere regio's krijgen
-dus voorlopig geen regio.
+Het bestand `data/capcodes.csv` heeft vijf kolommen: `capcode`, `regio`,
+`discipline`, `plaats`, `omschrijving`. De `omschrijving` levert de vertaling
+per capcode op de pagina (bijvoorbeeld "Ambulance 12-162").
 
-Voor landelijke dekking is een vollere bron nodig, bijvoorbeeld de capcodelijst
-van tomzulu10capcodes.nl. Zet die met dezelfde kolommen om naar `capcodes.csv`
-met de omzetter:
+De landelijke lijst wordt gemaakt met de omzetter uit `tools/`, uit de openbare
+export van p2000.bommel.net (alle veiligheidsregio's):
 
-    python3 tools/converteer_capcodes.py db_capcodes.txt data/capcodes.csv
-
-Na het vervangen van `capcodes.csv` de container herstarten:
-
+    curl -s -o /tmp/bommel.csv https://p2000.bommel.net/cap2csv.php
+    python3 tools/converteer_capcodes.py /tmp/bommel.csv data/capcodes.csv
     sudo docker compose restart mijnp2000-archief
 
-Het aantal geladen capcodes staat in het logboek bij het opstarten.
+De omzetter herkent ook het formaat van cyberjunky/RTL-SDR-P2000Receiver-HA.
+Het aantal geladen capcodes staat in het logboek bij het opstarten. De lijst
+veroudert langzaam; verversen kan door deze drie regels opnieuw te draaien.
 
 ## Instellingen
 

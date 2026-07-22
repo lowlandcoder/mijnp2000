@@ -9,8 +9,8 @@ Herkent twee openbare bronnen automatisch:
   * cyberjunky/RTL-SDR-P2000Receiver-HA (db_capcodes.txt)
     Komma-gescheiden, met kopregel: capcode, discipline, region, location, ...
 
-De uitvoer heeft de vier kolommen die de backend verwacht:
-    capcode,regio,discipline,plaats
+De uitvoer heeft de vijf kolommen die de backend verwacht:
+    capcode,regio,discipline,plaats,omschrijving
 
 De capcode wordt links met nullen aangevuld tot negen cijfers, zodat die
 overeenkomt met wat de ontvanger publiceert (bijvoorbeeld 0100000 -> 000100000).
@@ -62,6 +62,7 @@ def main():
                 zoek(rij, "regio", "region"),
                 zoek(rij, "discipline"),
                 zoek(rij, "plaats", "location"),
+                zoek(rij, "omschrijving", "description"),
             )
     else:
         # bommel-volgorde: code; discipline; regio; plaats; omschrijving; short
@@ -69,11 +70,11 @@ def main():
 
         def velden(rij):
             haal = lambda i: rij[i] if i < len(rij) else ""
-            return haal(0), haal(2), haal(1), haal(3)
+            return haal(0), haal(2), haal(1), haal(3), haal(4)
 
     rijen = []
     for rij in databron:
-        code, regio, discipline, plaats = velden(rij)
+        code, regio, discipline, plaats, omschrijving = velden(rij)
         cijfers = "".join(c for c in code if c.isdigit())
         if not cijfers:
             continue
@@ -83,11 +84,14 @@ def main():
                 "regio": regio.strip(),
                 "discipline": discipline.strip(),
                 "plaats": plaats.strip(),
+                "omschrijving": omschrijving.strip(),
             }
         )
 
     with open(uitvoer, "w", newline="", encoding="utf-8") as bestand:
-        schrijver = csv.DictWriter(bestand, fieldnames=["capcode", "regio", "discipline", "plaats"])
+        schrijver = csv.DictWriter(
+            bestand, fieldnames=["capcode", "regio", "discipline", "plaats", "omschrijving"]
+        )
         schrijver.writeheader()
         schrijver.writerows(rijen)
 
