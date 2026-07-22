@@ -25,8 +25,8 @@ met verplichte aanmelding.
 ## Stand van zaken
 
 - [x] Broker met wachtwoord en open poort (in de stack `mijnhuis`).
-- [x] Ontvangercontainer gebouwd.
-- [ ] Ontvanger uitgerold en getest op de sdr-server.
+- [x] Ontvangercontainer gebouwd (rtl-sdr-blog-stuurprogramma voor de V4).
+- [x] Ontvanger uitgerold en getest op de sdr-server; meldingen op MQTT.
 - [ ] Archiefpagina met database en regiofilter.
 - [ ] Home Assistant als afnemer met meldingen naar de telefoon.
 
