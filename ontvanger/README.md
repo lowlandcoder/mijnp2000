@@ -11,9 +11,18 @@ afnemers kan bedienen:
 
 Dit is het eerste onderdeel; de broker bestaat al en de archiefpagina volgt.
 
+## Stick: RTL-SDR Blog V4
+
+De gebruikte stick is een RTL-SDR Blog V4. Dat model heeft het stuurprogramma
+van rtl-sdr-blog nodig; de standaard `rtl-sdr` uit Debian ondersteunt de V4
+niet en geeft "PLL not locked" zonder ontvangst. De `Dockerfile` bouwt daarom
+dat stuurprogramma uit de bron. De containers voor ADS-B en RTL433 werken al,
+omdat die hun eigen, nieuwere stuurprogramma meebrengen.
+
 ## Bestanden
 
-- `Dockerfile` — bouwt het image met rtl-sdr, multimon-ng en het publicatiescript.
+- `Dockerfile` — bouwt het image met het rtl-sdr-blog-stuurprogramma,
+  multimon-ng en het publicatiescript.
 - `entrypoint.sh` — start de keten rtl_fm → multimon-ng → publiceer.py.
 - `publiceer.py` — leest de FLEX-regels en publiceert ze als JSON op MQTT.
 - `docker-compose.yml` — stack voor Portainer, met de instellingen op één plek.
@@ -43,13 +52,13 @@ In Portainer onder `environment` in te vullen:
 | `MQTT_HOST` | adres van de broker (lab023-server) | `192.168.2.38` |
 | `MQTT_PORT` | poort van de broker | `1883` |
 | `MQTT_TOPIC` | onderwerp om op te publiceren | `p2000/bericht` |
-| `MQTT_USER` | gebruikersnaam op de broker | `lab023` |
+| `MQTT_USER` | gebruikersnaam op de broker | `admin_mosquitto` |
 | `MQTT_PASSWORD` | wachtwoord | *invullen* |
 | `RTL_CMD` | eigen rtl_fm-commando, bijvoorbeeld met gain | zie `entrypoint.sh` |
 
 De broker draait als Mosquitto op de lab023-server (192.168.2.38), met poort
-1883 gepubliceerd en verplichte aanmelding. De gebruiker `lab023` en het
-wachtwoord zijn dezelfde als in de broker en in Zigbee2MQTT.
+1883 gepubliceerd en verplichte aanmelding. De gebruiker `admin_mosquitto` en
+het wachtwoord zijn dezelfde als in de broker en in Zigbee2MQTT.
 
 ## Inrichting via Portainer
 
