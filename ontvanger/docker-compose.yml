@@ -13,9 +13,9 @@ services:
       MQTT_HOST: "192.168.2.38"      # lab023-server, waar Mosquitto draait
       MQTT_PORT: "1883"
       MQTT_TOPIC: "p2000/bericht"
-      MQTT_USER: "lab023"
+      MQTT_USER: "admin_mosquitto"
       MQTT_PASSWORD: "${MQTT_PASSWORD:?stel MQTT_PASSWORD in via .env}"  # uit .env, niet in git
-      # RTL_CMD: "rtl_fm -f 169.65M -M fm -s 22050 -l 0 -g 20"   # gain toevoegen bij matige ontvangst
+      RTL_CMD: "rtl_fm -f 169.65M -M fm -s 22050 -l 0 -g 40"   # vaste gain 40 dB; werkt goed op deze plek
     devices:
       # De RTL-SDR-stick doorgeven aan de container. Controleer het pad met
       # 'ls -l /dev/bus/usb' op de sdr-server; vaak volstaat de hele usb-bus.

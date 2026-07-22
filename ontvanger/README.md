@@ -54,7 +54,11 @@ In Portainer onder `environment` in te vullen:
 | `MQTT_TOPIC` | onderwerp om op te publiceren | `p2000/bericht` |
 | `MQTT_USER` | gebruikersnaam op de broker | `admin_mosquitto` |
 | `MQTT_PASSWORD` | wachtwoord | *invullen* |
-| `RTL_CMD` | eigen rtl_fm-commando, bijvoorbeeld met gain | zie `entrypoint.sh` |
+| `RTL_CMD` | het rtl_fm-commando; hier met vaste gain 40 dB | zie `docker-compose.yml` |
+
+Een vaste gain van 40 dB blijkt op deze plek goed te werken; automatische gain
+gaf geen ontvangst. Bij een andere antenne of plek kan een andere waarde nodig
+zijn (probeer bijvoorbeeld 28 of 49.6).
 
 De broker draait als Mosquitto op de lab023-server (192.168.2.38), met poort
 1883 gepubliceerd en verplichte aanmelding. De gebruiker `admin_mosquitto` en
