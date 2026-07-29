@@ -12,7 +12,7 @@ services:
       MQTT_HOST: "192.168.2.38"      # lab023-server, waar Mosquitto draait
       MQTT_PORT: "1883"
       MQTT_TOPIC: "p2000/bericht"
-      MQTT_USER: "admin_mosquitto"
+      MQTT_USER: "p2000"
       MQTT_PASSWORD: "${MQTT_PASSWORD:?stel MQTT_PASSWORD in via .env}"
       RETENTIE_DAGEN: "7"            # bewaartermijn; instelbaar
     ports:
