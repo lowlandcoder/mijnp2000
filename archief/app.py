@@ -13,7 +13,8 @@ Oude meldingen worden automatisch opgeschoond na de bewaartermijn.
 Instellingen komen uit omgevingsvariabelen (in te vullen in docker-compose):
   MQTT_HOST, MQTT_PORT, MQTT_TOPIC, MQTT_USER, MQTT_PASSWORD  broker
   RETENTIE_DAGEN   bewaartermijn in dagen           (standaard 7)
-  DATA_DIR         map voor database en capcodes     (standaard /app/data)
+  DATA_DIR         map voor de capcodes              (standaard /app/data)
+  DB_DIR           map voor de database              (standaard DATA_DIR)
   POORT            poort waarop de pagina draait     (standaard 8000)
 """
 
@@ -30,7 +31,8 @@ from flask import Flask, jsonify, request, send_from_directory
 from waitress import serve
 
 DATA_DIR = os.environ.get("DATA_DIR", "/app/data")
-DB_PATH = os.path.join(DATA_DIR, "p2000.db")
+DB_DIR = os.environ.get("DB_DIR", DATA_DIR)
+DB_PATH = os.path.join(DB_DIR, "p2000.db")
 CAPCODES_PATH = os.path.join(DATA_DIR, "capcodes.csv")
 RETENTIE_DAGEN = int(os.environ.get("RETENTIE_DAGEN", "7"))
 POORT = int(os.environ.get("POORT", "8000"))

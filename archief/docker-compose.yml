@@ -15,8 +15,10 @@ services:
       MQTT_USER: "p2000"
       MQTT_PASSWORD: "${MQTT_PASSWORD:?stel MQTT_PASSWORD in via .env}"
       RETENTIE_DAGEN: "7"            # bewaartermijn; instelbaar
+      DB_DIR: "/app/gegevens"          # database op de externe SSD
     ports:
       # Alleen op localhost; nginx schakelt door naar deze poort.
       - "127.0.0.1:8200:8000"
     volumes:
       - ./data:/app/data
+      - /srv/ssddata/mijnp2000:/app/gegevens
