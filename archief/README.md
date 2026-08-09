@@ -27,6 +27,9 @@ discipline met `data/capcodes.csv`. De pagina haalt de meldingen op via de
 API en toont ze, nieuwste bovenaan. Mogelijkheden op de pagina:
 
 - filteren op meerdere regio's tegelijk, op periode en op een zoekwoord;
+- bij een eerste bezoek staat de regio Kennemerland aan; een andere keuze wordt
+  per apparaat in de browser onthouden. De standaardregio staat bovenin
+  `static/script.js` in de lijst `STANDAARD_REGIOS`;
 - een steunkleur per discipline (brandweer rood, ambulance geel, politie blauw,
   lifeliner groen), zowel in de badge als in de rand van de melding;
 - een kaartpin per melding die de locatie in Google Maps opent;

@@ -11,12 +11,48 @@ function zetKlok() {
     + " · " + nu.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
 }
 
-/* Regio's als aankruisvakjes; meerdere tegelijk mogelijk */
-let gekozenRegios = new Set();
+/* Regio's als aankruisvakjes; meerdere tegelijk mogelijk.
+   Bij een eerste bezoek staat Kennemerland aan. Kiest de bezoeker iets anders,
+   dan onthoudt de browser die keuze voor het volgende bezoek. */
+const STANDAARD_REGIOS = ["Kennemerland"];
+const REGIO_SLEUTEL = "mijnp2000.regios";
+
+let eigenKeuze = false;  // true zodra er een bewaarde keuze is
+
+function leesBewaardeRegios() {
+  try {
+    const bewaard = localStorage.getItem(REGIO_SLEUTEL);
+    if (bewaard !== null) {
+      eigenKeuze = true;
+      return new Set(JSON.parse(bewaard));
+    }
+  } catch (e) { /* opslag niet beschikbaar of onleesbaar */ }
+  return new Set(STANDAARD_REGIOS);
+}
+
+function bewaarRegios() {
+  eigenKeuze = true;
+  try {
+    localStorage.setItem(REGIO_SLEUTEL, JSON.stringify([...gekozenRegios]));
+  } catch (e) { /* opslag niet beschikbaar */ }
+}
+
+let gekozenRegios = leesBewaardeRegios();
 
 async function vulRegios() {
   try {
     const regios = await (await fetch("/api/regios")).json();
+
+    // Staat de standaardregio nog niet in de gegevens, laat het filter dan los,
+    // anders blijft de lijst bij een eerste bezoek leeg.
+    if (!eigenKeuze) {
+      let aangepast = false;
+      for (const regio of [...gekozenRegios]) {
+        if (!regios.includes(regio)) { gekozenRegios.delete(regio); aangepast = true; }
+      }
+      if (aangepast) haalMeldingen();
+    }
+
     const houder = $("regioOpties");
     houder.innerHTML = "";
     for (const regio of regios) {
@@ -28,6 +64,7 @@ async function vulRegios() {
       vak.checked = gekozenRegios.has(regio);
       vak.addEventListener("change", () => {
         if (vak.checked) gekozenRegios.add(regio); else gekozenRegios.delete(regio);
+        bewaarRegios();
         werkRegioSamenvatting();
         haalMeldingen();
       });
