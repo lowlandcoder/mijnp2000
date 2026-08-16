@@ -9,10 +9,11 @@ ontvanger en meerdere afnemers, met MQTT als schakelpunt:
 - **Afnemer — Home Assistant**: leest hetzelfde MQTT-onderwerp en stuurt
   seintjes naar de telefoon, met filters per regio. (Later, als Home Assistant
   draait.)
-- **Afnemer — archiefpagina** `mijnp2000.lab023.nl`: een kleine backend leest
-  MQTT, schrijft de meldingen in een SQLite-database, vertaalt capcodes naar
-  regio, en toont ze in de Lab023-huisstijl met filter op regio en instelbare
-  geschiedenis tot zeven dagen. (Volgt na de ontvanger.)
+- **Afnemer — archiefpagina** `mijnp2000.lab023.nl`: een kleine backend op de
+  lab023-server leest MQTT, schrijft de meldingen in een SQLite-database,
+  vertaalt capcodes naar regio, en toont ze met filter op regio en instelbare
+  geschiedenis tot zeven dagen. De opmaak volgt sinds 16-08-2026 de compacte
+  weergave van p2000.page; zie `archief/README.md`.
 
 De broker draait al: Mosquitto op de lab023-server (192.168.2.38), poort 1883,
 met verplichte aanmelding.
@@ -29,7 +30,8 @@ met verplichte aanmelding.
 - [x] Ontvangercontainer gebouwd (rtl-sdr-blog-stuurprogramma voor de V4).
 - [x] Ontvanger uitgerold en getest op de sdr-server; meldingen op MQTT.
 - [x] Archiefpagina met database en regiofilter gebouwd.
-- [ ] Archiefpagina uitgerold op de lab023-server en capcode-lijst geplaatst.
+- [x] Archiefpagina uitgerold op de lab023-server en capcode-lijst geplaatst.
+- [x] Opmaak van de pagina naar het voorbeeld van p2000.page (16-08-2026).
 - [ ] Home Assistant als afnemer met meldingen naar de telefoon.
 
 ## Eigen stick
