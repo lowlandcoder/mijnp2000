@@ -2,63 +2,80 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#061225">
-  <meta name="description" content="Archief van P2000-meldingen van de hulpdiensten, met filter op regio en periode.">
-  <title>Lab023 — MijnP2000</title>
-  <link rel="stylesheet" href="huisstijl.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#212121">
+  <meta name="description" content="Meldingen van de hulpdiensten, ontvangen op de sdr-server, met filter op regio en periode.">
+  <title>MijnP2000</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="app">
-    <header class="topbar">
-      <div>
-        <h1 class="merk">Mijn<em>P2000</em></h1>
-        <p class="ondertitel">Meldingen van de hulpdiensten, ontvangen op de sdr-server.</p>
-      </div>
-      <div class="klok" id="klok" aria-hidden="true"></div>
-    </header>
 
-    <div class="filters">
-      <div class="filter">
-        <span>Regio</span>
-        <details class="regio-menu" id="regioMenu">
-          <summary id="regioSamenvatting">Alle regio's</summary>
-          <div class="regio-opties" id="regioOpties"></div>
-        </details>
-      </div>
-      <label class="filter">
-        <span>Periode</span>
-        <select id="periode">
-          <option value="1">Laatste uur</option>
-          <option value="6">Laatste 6 uur</option>
-          <option value="24" selected>Laatste 24 uur</option>
-          <option value="72">Laatste 3 dagen</option>
-          <option value="168">Laatste 7 dagen</option>
-        </select>
-      </label>
-      <label class="filter filter-zoek">
-        <span>Zoeken</span>
-        <input id="zoek" type="text" placeholder="Woord in de melding…" autocomplete="off">
-      </label>
-      <div class="filter filter-knop">
-        <span>Kaart</span>
-        <a class="kaartknop" href="https://p2000.page/live-kaart" target="_blank" rel="noopener">
-          Heel Nederland
-        </a>
-      </div>
-      <label class="filter filter-auto">
-        <span>Verversen</span>
-        <input id="auto" type="checkbox" checked>
-      </label>
+  <!-- Balk bovenin: knoppen links, klok in het midden, knoppen rechts -->
+  <header class="balk" id="balk">
+    <div class="knoppen knoppen-links">
+      <a class="knop" href="https://start.lab023.nl" title="Naar de startpagina" aria-label="Startpagina">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"></path><path d="M5 10v10h14V10"></path></svg>
+      </a>
+      <button class="knop" id="knopGeluid" title="Geluid bij een nieuwe melding" aria-label="Geluid aan of uit" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h4l5-4v14l-5-4H5z"></path><path class="geluid-uit" d="M17 9l4 6M21 9l-4 6"></path><path class="geluid-aan" d="M17 9a4 4 0 0 1 0 6"></path></svg>
+      </button>
+      <button class="knop knop-filter" id="knopFilter" title="Filters" aria-label="Filters" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h6"></path><circle cx="17" cy="7" r="2"></circle><circle cx="16" cy="12" r="2"></circle><circle cx="12" cy="17" r="2"></circle></svg>
+      </button>
     </div>
 
-    <p id="stand" class="stand"></p>
-    <div id="lijst" class="lijst"></div>
-    <p id="leeg" class="leeg" hidden>Geen meldingen in deze selectie.</p>
+    <div class="titelblok">
+      <div class="klok" id="klok">--:--:--</div>
+      <div class="ondertitel">mijnp2000.lab023.nl <span class="live" id="live">live</span></div>
+    </div>
 
-    <p class="voettekst">Afgeschermd, voor eigen gebruik. Meldingen kunnen persoonsgegevens bevatten.</p>
-  </main>
+    <div class="knoppen knoppen-rechts">
+      <a class="knop" href="https://p2000.page/live-kaart" target="_blank" rel="noopener" title="Landelijke kaart" aria-label="Kaart">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4L3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4z"></path><path d="M9 4v13M15 6.5v13"></path></svg>
+      </a>
+      <button class="knop" id="knopZoek" title="Zoeken" aria-label="Zoeken">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg>
+      </button>
+      <button class="knop" id="knopSchermvullend" title="Schermvullend" aria-label="Schermvullend">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Filterpaneel, klapt open onder de balk -->
+  <section class="paneel" id="paneel" hidden>
+    <div class="paneel-vak">
+      <span class="paneel-kop">Regio</span>
+      <div class="regio-opties" id="regioOpties"></div>
+      <div class="paneel-acties">
+        <button type="button" class="tekstknop" id="regioAlles">Alles uit</button>
+      </div>
+    </div>
+
+    <div class="paneel-vak">
+      <span class="paneel-kop">Periode</span>
+      <select id="periode">
+        <option value="1">Laatste uur</option>
+        <option value="6">Laatste 6 uur</option>
+        <option value="24" selected>Laatste 24 uur</option>
+        <option value="72">Laatste 3 dagen</option>
+        <option value="168">Laatste 7 dagen</option>
+      </select>
+
+      <span class="paneel-kop">Zoeken</span>
+      <input id="zoek" type="search" placeholder="Woord in de melding…" autocomplete="off">
+
+      <label class="schakel"><input id="auto" type="checkbox" checked> Automatisch verversen</label>
+    </div>
+  </section>
+
+  <p class="stand" id="stand"></p>
+
+  <main class="lijst" id="lijst"></main>
+
+  <p class="leeg" id="leeg" hidden>Geen meldingen in deze selectie.</p>
+
+  <footer class="voettekst">Afgeschermd, voor eigen gebruik. Meldingen kunnen persoonsgegevens bevatten.</footer>
 
   <script src="script.js"></script>
 </body>

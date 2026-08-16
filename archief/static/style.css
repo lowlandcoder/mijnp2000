@@ -1,222 +1,309 @@
-/* Pagina-eigen opmaak voor MijnP2000.
-   De gedeelde huisstijl staat in huisstijl.css en wordt eerder ingeladen. */
+/* Opmaak van MijnP2000.
+   Deze pagina volgt bewust niet de glaslook van de Lab023-huisstijl, maar de
+   compacte, donkergrijze weergave van p2000.page: volle breedte, dichte
+   regels, een gekleurde titel per dienst en een pin rechts naar de kaart.
+   Daarom wordt huisstijl.css hier niet ingeladen. */
 
 :root {
-  --brandweer: #ff6b6b;   /* rood */
-  --ambulance: #ffd43b;   /* geel */
-  --politie:   #4dabf7;   /* blauw (gelijk aan accent) */
-  --lifeliner: #69db7c;   /* groen */
-  --overig:    #9db0c9;   /* grijs voor onbekend/overig */
+  --bg:        #131313;   /* achtergrond tussen de regels */
+  --rij:       #2b2b2b;   /* vlak van een melding */
+  --rij-hover: #333333;
+  --balk:      #212121;   /* balk bovenin */
+  --knop:      #3a3a3a;
+  --tekst:     #eaeaea;
+  --grijs:     #8a8a8a;   /* capcodes en bijschriften */
+  --grijs-licht: #a8a8a8;
+  --oranje:    #f0883e;   /* filterknop */
+  --rood:      #b93b2f;   /* blokje met minuten geleden */
+
+  /* Kleur per dienst: titel en de balk links van de melding */
+  --politie:        #4da6ff;
+  --politie-rand:   #2f6fb3;
+  --ambulance:      #dede2a;
+  --ambulance-rand: #8a8a1e;
+  --brandweer:      #ff5a5a;
+  --brandweer-rand: #a33636;
+  --lifeliner:      #e084e0;
+  --lifeliner-rand: #8a4b8a;
+  --overig:         #c4c4c4;
+  --overig-rand:    #555555;
 }
 
-.topbar {
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--tekst);
+  font: 15px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---------- Balk bovenin ---------- */
+.balk {
+  position: sticky;
+  top: 0;
+  z-index: 30;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 8px;
+  padding: 8px 8px;
+  background: var(--balk);
+  border-bottom: 1px solid #000;
+}
+.knoppen { display: flex; gap: 6px; flex: 0 0 auto; }
+
+.knop {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 38px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--knop);
+  color: #dcdcdc;
+  cursor: pointer;
+  text-decoration: none;
+}
+.knop:hover { background: #454545; }
+.knop svg {
+  width: 21px; height: 21px;
+  fill: none; stroke: currentColor;
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+.knop-filter { color: var(--oranje); border-color: rgba(240, 136, 62, .55); }
+.knop.aan { color: var(--oranje); border-color: rgba(240, 136, 62, .55); }
+
+/* Luidsprekertje: kruisje bij uit, boogje bij aan */
+#knopGeluid .geluid-aan { display: none; }
+#knopGeluid.aan .geluid-uit { display: none; }
+#knopGeluid.aan .geluid-aan { display: inline; }
+
+.titelblok { text-align: center; flex: 1 1 auto; min-width: 0; }
+.klok {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
 }
 .ondertitel {
-  color: var(--muted);
-  font-size: 13px;
-  margin-top: 4px;
-}
-.klok {
-  flex: 0 0 auto;
-  color: var(--muted);
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  padding-top: 4px;
+  font-size: 11.5px;
+  color: var(--grijs);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.live { color: #57c46a; }
+.live.stil { color: var(--grijs); }
 
-/* Filterbalk */
-.filters {
+/* ---------- Filterpaneel ---------- */
+.paneel[hidden] { display: none; }
+.paneel {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 16px;
+  padding: 12px;
+  background: #262626;
+  border-bottom: 1px solid #000;
 }
-.filter {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--muted);
+.paneel-vak { flex: 1 1 240px; min-width: 0; }
+.paneel-kop {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--grijs);
 }
-.filter-zoek { flex: 1 1 180px; }
-.filter select,
-.filter input[type="text"] {
-  color: var(--tekst);
-  background: rgba(5, 18, 39, .55);
-  border: 1px solid var(--rand);
-  border-radius: 10px;
-  padding: 8px 10px;
-  font-size: 13px;
-}
-.filter input[type="text"] { width: 100%; }
-.filter select:focus,
-.filter input:focus { outline: none; border-color: var(--accent); }
-.filter-auto { justify-content: flex-end; }
-.filter-auto input { width: 18px; height: 18px; accent-color: var(--accent); }
+.paneel-vak .paneel-kop + .paneel-kop,
+.paneel select + .paneel-kop { margin-top: 12px; }
 
-/* Regio-keuzemenu met meerdere selecties */
-.regio-menu {
-  position: relative;
-}
-.regio-menu summary {
-  list-style: none;
-  cursor: pointer;
-  color: var(--tekst);
-  background: rgba(5, 18, 39, .55);
-  border: 1px solid var(--rand);
-  border-radius: 10px;
-  padding: 8px 10px;
-  font-size: 13px;
-  min-width: 150px;
-  white-space: nowrap;
-}
-.regio-menu summary::-webkit-details-marker { display: none; }
-.regio-menu[open] summary { border-color: var(--accent); }
 .regio-opties {
-  position: absolute;
-  z-index: 20;
-  top: calc(100% + 4px);
-  left: 0;
-  max-height: 260px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 2px 10px;
+  max-height: 220px;
   overflow-y: auto;
-  min-width: 220px;
-  padding: 8px;
-  background: #0b1f3a;
-  border: 1px solid var(--rand);
-  border-radius: 12px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, .45);
+  padding-right: 4px;
 }
 .regio-optie {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 5px 6px;
-  border-radius: 8px;
-  color: var(--tekst);
+  gap: 7px;
+  padding: 3px 0;
   font-size: 13px;
+  color: var(--tekst);
   cursor: pointer;
 }
-.regio-optie:hover { background: rgba(255, 255, 255, .05); }
-.regio-optie input { accent-color: var(--accent); }
+.regio-optie input,
+.schakel input { accent-color: var(--oranje); width: 16px; height: 16px; }
 
-/* Kaartknop */
-.filter-knop { justify-content: flex-end; }
-.kaartknop {
-  display: inline-block;
+.paneel select,
+.paneel input[type="search"] {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 14px;
   color: var(--tekst);
-  text-decoration: none;
-  background: rgba(77, 171, 247, .14);
-  border: 1px solid rgba(77, 171, 247, .4);
-  border-radius: 10px;
-  padding: 8px 12px;
-  font-size: 13px;
-  white-space: nowrap;
+  background: #1c1c1c;
+  border: 1px solid #444;
+  border-radius: 6px;
 }
-.kaartknop:hover { background: rgba(77, 171, 247, .24); }
+.paneel select:focus,
+.paneel input:focus { outline: none; border-color: var(--oranje); }
+
+.paneel-acties { margin-top: 6px; }
+.tekstknop {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: var(--oranje);
+  cursor: pointer;
+}
+.schakel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--tekst);
+  cursor: pointer;
+}
 
 .stand {
-  color: var(--muted);
-  font-size: 12px;
-  margin-bottom: 10px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  color: var(--grijs);
 }
 
-/* Lijst met meldingen */
-.lijst { display: flex; flex-direction: column; gap: 10px; }
+/* ---------- Lijst met meldingen ---------- */
+.lijst { display: flex; flex-direction: column; gap: 6px; }
+
 .melding {
-  padding: 12px 14px 12px 16px;
-  border: 1px solid var(--rand);
-  border-left: 4px solid var(--overig);   /* kleur per discipline, via JS */
-  border-radius: 14px;
-  background: var(--kaart);
+  display: flex;
+  align-items: stretch;
+  background: var(--rij);
+  border-left: 5px solid var(--overig-rand);
 }
-.melding-kop {
+.melding:hover { background: var(--rij-hover); }
+
+.rij-inhoud {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 9px 10px 10px 11px;
+}
+
+.titel {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--overig);
+  overflow-wrap: anywhere;
+}
+
+.meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-.melding-tijd {
-  color: var(--muted);
-  font-size: 12px;
+  gap: 7px;
+  margin-top: 3px;
+  font-size: 13.5px;
+  color: var(--grijs-licht);
   font-variant-numeric: tabular-nums;
 }
-.melding.hoofd-brandweer { border-left-color: var(--brandweer); }
-.melding.hoofd-ambulance { border-left-color: var(--ambulance); }
-.melding.hoofd-politie   { border-left-color: var(--politie); }
-.melding.hoofd-lifeliner { border-left-color: var(--lifeliner); }
-
-.melding-tekst { font-size: 14px; line-height: 1.5; }
-
-/* Kaartpin per melding */
-.pin {
-  flex: 0 0 auto;
-  display: inline-grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  color: var(--accent);
-  background: rgba(77, 171, 247, .12);
-  border: 1px solid rgba(77, 171, 247, .3);
-}
-.pin:hover { background: rgba(77, 171, 247, .24); }
-.pin svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-
-/* Capcodes met vertaling */
-.codes {
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.code-regel {
-  color: var(--muted);
+.tijd { color: var(--grijs-licht); }
+.tijd b { color: #ffffff; font-weight: 700; }
+.geleden {
+  padding: 1px 5px;
   font-size: 11.5px;
-  line-height: 1.4;
-}
-.code-nr {
-  color: var(--tekst);
-  font-variant-numeric: tabular-nums;
-  margin-right: 6px;
-}
-
-/* Kenmerken (prioriteit, regio, discipline) */
-.kenmerk {
-  font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: .02em;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--rand);
-  color: var(--muted);
+  color: #fff;
+  background: var(--rood);
+  border-radius: 3px;
 }
-.kenmerk.prio1 { color: #ff8787; border-color: rgba(255, 135, 135, .5); }
-.kenmerk.prio2 { color: var(--ambulance); border-color: rgba(255, 212, 59, .5); }
-.kenmerk.regio { color: var(--accent); border-color: rgba(77, 171, 247, .5); }
+.geleden.oud { background: #4a4a4a; }
+.datum { color: var(--grijs); }
 
-/* Disciplinebadge in de steunkleur */
-.kenmerk.disc-brandweer { color: var(--brandweer); border-color: rgba(255, 107, 107, .5); }
-.kenmerk.disc-ambulance { color: var(--ambulance); border-color: rgba(255, 212, 59, .5); }
-.kenmerk.disc-politie   { color: var(--politie);   border-color: rgba(77, 171, 247, .5); }
-.kenmerk.disc-lifeliner { color: var(--lifeliner); border-color: rgba(105, 219, 124, .5); }
+.badge {
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid #555;
+  border-radius: 999px;
+  color: var(--grijs-licht);
+}
+.badge.prio1 { color: #ff8080; border-color: rgba(255, 128, 128, .55); }
+.badge.prio2 { color: var(--ambulance); border-color: rgba(222, 222, 42, .55); }
+.badge.regio { color: #9ec9f5; border-color: rgba(158, 201, 245, .45); }
+
+.codes { margin-top: 4px; }
+.code {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--grijs);
+  overflow-wrap: anywhere;
+}
+.code .nr { font-variant-numeric: tabular-nums; margin-right: 6px; }
+.eenheid {
+  margin-top: 2px;
+  padding-left: 26px;
+  font-size: 13px;
+  font-style: italic;
+  color: #9a9a9a;
+  overflow-wrap: anywhere;
+}
+
+/* Kleur per dienst */
+.melding.dienst-politie   { border-left-color: var(--politie-rand); }
+.melding.dienst-politie   .titel { color: var(--politie); }
+.melding.dienst-ambulance { border-left-color: var(--ambulance-rand); }
+.melding.dienst-ambulance .titel { color: var(--ambulance); }
+.melding.dienst-brandweer { border-left-color: var(--brandweer-rand); }
+.melding.dienst-brandweer .titel { color: var(--brandweer); }
+.melding.dienst-lifeliner { border-left-color: var(--lifeliner-rand); }
+.melding.dienst-lifeliner .titel { color: var(--lifeliner); }
+
+/* Pin rechts, over de volle hoogte van de melding */
+.pin {
+  flex: 0 0 62px;
+  display: grid;
+  place-items: center;
+  background: #363636;
+  color: #8f8f8f;
+  text-decoration: none;
+}
+.pin:hover { background: #434343; color: #cfcfcf; }
+.pin svg { width: 26px; height: 26px; fill: currentColor; }
 
 .leeg {
-  color: var(--muted);
-  font-size: 13px;
+  padding: 40px 12px;
   text-align: center;
-  padding: 30px 0;
+  font-size: 14px;
+  color: var(--grijs);
 }
 .voettekst {
-  color: var(--muted);
-  font-size: 11.5px;
+  padding: 18px 12px 24px;
   text-align: center;
-  margin-top: 22px;
+  font-size: 11.5px;
+  color: #6e6e6e;
+}
+
+/* Nieuwe melding kort laten oplichten */
+@keyframes nieuw {
+  from { background: #3d3d2a; }
+  to   { background: var(--rij); }
+}
+.melding.nieuw { animation: nieuw 4s ease-out 1; }
+
+/* Smalle schermen: iets krappere maten */
+@media (max-width: 480px) {
+  .balk { padding: 7px 6px; gap: 6px; }
+  .knoppen { gap: 5px; }
+  .knop { width: 35px; height: 36px; }
+  .knop svg { width: 19px; height: 19px; }
+  .klok { font-size: 18px; }
+  .titel { font-size: 15.5px; }
+  .pin { flex-basis: 52px; }
 }

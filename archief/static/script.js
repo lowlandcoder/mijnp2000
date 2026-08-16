@@ -1,23 +1,27 @@
-// Werking van de MijnP2000-pagina: filters uitlezen, meldingen ophalen en
-// tonen, met steunkleuren per discipline, een kaartpin per melding en de
-// vertaling per capcode. Ververst automatisch zolang dat aanstaat.
+// Werking van de MijnP2000-pagina.
+// De weergave volgt p2000.page: een balk bovenin met klok en knoppen, filters
+// achter een knop, en per melding een brede regel met een gekleurde titel per
+// dienst, de tijd met het aantal minuten geleden, de capcodes met vertaling en
+// een pin rechts naar de kaart.
 
 const $ = (id) => document.getElementById(id);
 
-/* Klok bovenin */
+/* ---------- Klok bovenin ---------- */
 function zetKlok() {
-  const nu = new Date();
-  $("klok").textContent = nu.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })
-    + " · " + nu.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
+  $("klok").textContent = new Date().toLocaleTimeString("nl-NL", {
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  });
 }
 
-/* Regio's als aankruisvakjes; meerdere tegelijk mogelijk.
-   Bij een eerste bezoek staat Kennemerland aan. Kiest de bezoeker iets anders,
-   dan onthoudt de browser die keuze voor het volgende bezoek. */
+/* ---------- Bewaarde keuzes ---------- */
 const STANDAARD_REGIOS = ["Kennemerland"];
 const REGIO_SLEUTEL = "mijnp2000.regios";
+const GELUID_SLEUTEL = "mijnp2000.geluid";
 
-let eigenKeuze = false;  // true zodra er een bewaarde keuze is
+let eigenKeuze = false;   // true zodra er een bewaarde keuze is
+let geluidAan = false;
+let eersteRonde = true;   // bij het opbouwen geen seintje en geen oplichten
+let bekendeSleutels = new Set();
 
 function leesBewaardeRegios() {
   try {
@@ -39,6 +43,7 @@ function bewaarRegios() {
 
 let gekozenRegios = leesBewaardeRegios();
 
+/* ---------- Regiolijst in het filterpaneel ---------- */
 async function vulRegios() {
   try {
     const regios = await (await fetch("/api/regios")).json();
@@ -54,6 +59,13 @@ async function vulRegios() {
     }
 
     const houder = $("regioOpties");
+    const bestaand = [...houder.querySelectorAll("input")].map((v) => v.value).join("|");
+    if (bestaand === regios.join("|")) {
+      // Alleen de vinkjes bijwerken; de lijst zelf is niet veranderd.
+      houder.querySelectorAll("input").forEach((v) => { v.checked = gekozenRegios.has(v.value); });
+      return;
+    }
+
     houder.innerHTML = "";
     for (const regio of regios) {
       const label = document.createElement("label");
@@ -65,25 +77,17 @@ async function vulRegios() {
       vak.addEventListener("change", () => {
         if (vak.checked) gekozenRegios.add(regio); else gekozenRegios.delete(regio);
         bewaarRegios();
-        werkRegioSamenvatting();
         haalMeldingen();
       });
       label.appendChild(vak);
       label.appendChild(document.createTextNode(regio));
       houder.appendChild(label);
     }
-    werkRegioSamenvatting();
   } catch (e) { /* backend even niet bereikbaar */ }
 }
 
-function werkRegioSamenvatting() {
-  const n = gekozenRegios.size;
-  const tekst = n === 0 ? "Alle regio's" : (n === 1 ? [...gekozenRegios][0] : n + " regio's");
-  $("regioSamenvatting").textContent = tekst;
-}
-
-/* Discipline naar kleurklasse; lifeliner wint (groen) */
-function disciplineKlasse(tekst) {
+/* ---------- Kleur per dienst ---------- */
+function dienstKlasse(tekst) {
   const t = (tekst || "").toLowerCase();
   if (/lifeliner|traumaheli|\bmmt\b|mobiel medisch/.test(t)) return "lifeliner";
   if (t.includes("brandweer")) return "brandweer";
@@ -92,33 +96,30 @@ function disciplineKlasse(tekst) {
   return "overig";
 }
 
-/* Hoofdkleur van de melding: eerst lifeliner in de tekst, anders de eerste
-   bekende discipline */
 function hoofdKlasse(m) {
   const alles = (m.bericht || "") + " " + (m.disciplines || "");
   if (/lifeliner|traumaheli|\bmmt\b/i.test(alles)) return "lifeliner";
   for (const disc of (m.disciplines || "").split(",").map((d) => d.trim()).filter(Boolean)) {
-    const k = disciplineKlasse(disc);
+    const k = dienstKlasse(disc);
     if (k !== "overig") return k;
   }
   return "overig";
 }
 
-/* Prioriteit uit de melding halen voor een kleurtje (A1/P1 = hoog) */
 function prioKlasse(bericht) {
   if (/\b(A1|P\s?1|PRIO\s?1|GRIP)\b/i.test(bericht)) return "prio1";
   if (/\b(A2|P\s?2|PRIO\s?2)\b/i.test(bericht)) return "prio2";
   return "";
 }
 
-/* Tijd netjes tonen */
-function toonTijd(iso) {
+/* ---------- Tijd ---------- */
+function minutenGeleden(iso) {
   const d = new Date(iso);
-  if (isNaN(d)) return iso || "";
-  return d.toLocaleString("nl-NL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  if (isNaN(d)) return null;
+  return Math.max(0, Math.round((Date.now() - d.getTime()) / 60000));
 }
 
-/* Zoekopdracht voor Google Maps opbouwen uit de melding en de plaats */
+/* ---------- Zoekopdracht voor Google Maps ---------- */
 function kaartZoekterm(m) {
   let t = (m.bericht || "")
     .replace(/\(dia:[^)]*\)/gi, " ")
@@ -131,79 +132,149 @@ function kaartZoekterm(m) {
   return (t + " Nederland").trim();
 }
 
-const PIN_SVG = '<svg viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"></path><circle cx="12" cy="10" r="2.4"></circle></svg>';
+const PIN_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"></path></svg>';
 
-/* Eén melding opbouwen */
-function maakMelding(m) {
-  const kaart = document.createElement("div");
-  kaart.className = "melding hoofd-" + hoofdKlasse(m);
+/* ---------- Eén melding opbouwen ---------- */
+function maakMelding(m, isNieuw) {
+  const rij = document.createElement("article");
+  rij.className = "melding dienst-" + hoofdKlasse(m) + (isNieuw ? " nieuw" : "");
 
-  const kop = document.createElement("div");
-  kop.className = "melding-kop";
+  const inhoud = document.createElement("div");
+  inhoud.className = "rij-inhoud";
 
-  // Kaartpin naar Google Maps
+  const titel = document.createElement("h2");
+  titel.className = "titel";
+  titel.textContent = m.bericht || "";
+  inhoud.appendChild(titel);
+
+  const meta = document.createElement("div");
+  meta.className = "meta";
+
+  const d = new Date(m.ontvangen);
+  const tijd = document.createElement("span");
+  tijd.className = "tijd";
+  if (!isNaN(d)) {
+    const uu = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    const ss = String(d.getSeconds()).padStart(2, "0");
+    tijd.innerHTML = "<b>" + uu + ":" + mm + "</b>:" + ss;
+  } else {
+    tijd.textContent = m.ontvangen || "";
+  }
+  meta.appendChild(tijd);
+
+  const min = minutenGeleden(m.ontvangen);
+  if (min !== null) {
+    const geleden = document.createElement("span");
+    geleden.className = "geleden" + (min > 60 ? " oud" : "");
+    geleden.dataset.tijd = m.ontvangen;
+    geleden.textContent = "+" + min;
+    geleden.title = min + " minuten geleden";
+    meta.appendChild(geleden);
+  }
+
+  if (!isNaN(d)) {
+    const datum = document.createElement("span");
+    datum.className = "datum";
+    datum.textContent = d.toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" });
+    meta.appendChild(datum);
+  }
+
+  const prio = prioKlasse(m.bericht || "");
+  if (prio) {
+    const badge = document.createElement("span");
+    badge.className = "badge " + prio;
+    badge.textContent = prio === "prio1" ? "Prio 1" : "Prio 2";
+    meta.appendChild(badge);
+  }
+  for (const regio of (m.regios || "").split(",").map((r) => r.trim()).filter(Boolean)) {
+    const badge = document.createElement("span");
+    badge.className = "badge regio";
+    badge.textContent = regio;
+    meta.appendChild(badge);
+  }
+  inhoud.appendChild(meta);
+
+  // Capcodes met vertaling
+  if (m.codes && m.codes.length) {
+    const codes = document.createElement("div");
+    codes.className = "codes";
+    for (const c of m.codes) {
+      const regel = document.createElement("div");
+      regel.className = "code";
+      const nr = document.createElement("span");
+      nr.className = "nr";
+      nr.textContent = c.capcode;
+      regel.appendChild(nr);
+      const delen = [c.omschrijving, c.discipline, c.regio || c.plaats].filter(Boolean);
+      regel.appendChild(document.createTextNode(delen.length ? delen.join(" / ") : "onbekende capcode"));
+      codes.appendChild(regel);
+    }
+    inhoud.appendChild(codes);
+
+    // Eenheid als extra regel: alleen capcodes van een eenheid met een eigen
+    // standplaats. Monitorcodes van de meldkamer en regels zonder plaats staan
+    // al volledig in de lijst hierboven en worden overgeslagen.
+    const eenheden = [];
+    for (const c of m.codes) {
+      if (!c.omschrijving || !c.plaats) continue;
+      if (/monitorcode|meldkamer/i.test(c.omschrijving)) continue;
+      const tekst = c.omschrijving + " - " + c.plaats;
+      if (!eenheden.includes(tekst)) eenheden.push(tekst);
+    }
+    if (eenheden.length) {
+      const eenheid = document.createElement("div");
+      eenheid.className = "eenheid";
+      eenheid.textContent = eenheden.join(" · ");
+      inhoud.appendChild(eenheid);
+    }
+  }
+
+  rij.appendChild(inhoud);
+
   const pin = document.createElement("a");
   pin.className = "pin";
   pin.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(kaartZoekterm(m));
   pin.target = "_blank";
   pin.rel = "noopener";
   pin.title = "Toon locatie op de kaart";
+  pin.setAttribute("aria-label", "Toon locatie op de kaart");
   pin.innerHTML = PIN_SVG;
-  kop.appendChild(pin);
+  rij.appendChild(pin);
 
-  const tijd = document.createElement("span");
-  tijd.className = "melding-tijd";
-  tijd.textContent = toonTijd(m.ontvangen);
-  kop.appendChild(tijd);
-
-  const prio = prioKlasse(m.bericht || "");
-  if (prio) {
-    const kenmerk = document.createElement("span");
-    kenmerk.className = "kenmerk " + prio;
-    kenmerk.textContent = prio === "prio1" ? "Prio 1" : "Prio 2";
-    kop.appendChild(kenmerk);
-  }
-  for (const regio of (m.regios || "").split(",").map((r) => r.trim()).filter(Boolean)) {
-    const kenmerk = document.createElement("span");
-    kenmerk.className = "kenmerk regio";
-    kenmerk.textContent = regio;
-    kop.appendChild(kenmerk);
-  }
-  for (const disc of (m.disciplines || "").split(",").map((d) => d.trim()).filter(Boolean)) {
-    const kenmerk = document.createElement("span");
-    kenmerk.className = "kenmerk disc-" + disciplineKlasse(disc);
-    kenmerk.textContent = disc;
-    kop.appendChild(kenmerk);
-  }
-
-  const tekst = document.createElement("div");
-  tekst.className = "melding-tekst";
-  tekst.textContent = m.bericht || "";
-
-  kaart.appendChild(kop);
-  kaart.appendChild(tekst);
-
-  // Vertaling per capcode
-  if (m.codes && m.codes.length) {
-    const codes = document.createElement("div");
-    codes.className = "codes";
-    for (const c of m.codes) {
-      const regel = document.createElement("div");
-      regel.className = "code-regel";
-      const nr = document.createElement("span");
-      nr.className = "code-nr";
-      nr.textContent = c.capcode;
-      regel.appendChild(nr);
-      const delen = [c.omschrijving || c.discipline, c.plaats, c.regio].filter(Boolean);
-      regel.appendChild(document.createTextNode(delen.length ? delen.join(" · ") : "onbekende capcode"));
-      codes.appendChild(regel);
-    }
-    kaart.appendChild(codes);
-  }
-  return kaart;
+  return rij;
 }
 
-/* Meldingen ophalen en tonen */
+/* ---------- Blokjes met minuten geleden bijwerken ---------- */
+function werkGeledenBij() {
+  document.querySelectorAll(".geleden").forEach((el) => {
+    const min = minutenGeleden(el.dataset.tijd);
+    if (min === null) return;
+    el.textContent = "+" + min;
+    el.title = min + " minuten geleden";
+    el.classList.toggle("oud", min > 60);
+  });
+}
+
+/* ---------- Seintje bij een nieuwe melding ---------- */
+function piep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const vol = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    vol.gain.setValueAtTime(0.0001, ctx.currentTime);
+    vol.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+    vol.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35);
+    osc.connect(vol).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.36);
+    setTimeout(() => ctx.close(), 600);
+  } catch (e) { /* geluid niet mogelijk in deze browser */ }
+}
+
+/* ---------- Meldingen ophalen en tonen ---------- */
 async function haalMeldingen() {
   const params = new URLSearchParams();
   if (gekozenRegios.size) params.set("regios", [...gekozenRegios].join(","));
@@ -215,24 +286,81 @@ async function haalMeldingen() {
   try {
     const meldingen = await (await fetch("/api/meldingen?" + params.toString())).json();
     const lijst = $("lijst");
+    const nieuweSleutels = new Set();
+    let aantalNieuw = 0;
+
     lijst.innerHTML = "";
-    meldingen.forEach((m) => lijst.appendChild(maakMelding(m)));
+    for (const m of meldingen) {
+      const sleutel = (m.ontvangen || "") + "|" + (m.bericht || "");
+      nieuweSleutels.add(sleutel);
+      const isNieuw = !eersteRonde && !bekendeSleutels.has(sleutel);
+      if (isNieuw) aantalNieuw++;
+      lijst.appendChild(maakMelding(m, isNieuw));
+    }
+
+    bekendeSleutels = nieuweSleutels;
+    if (aantalNieuw && geluidAan) piep();
+    eersteRonde = false;
+
     $("leeg").hidden = meldingen.length !== 0;
     $("stand").textContent = meldingen.length
-      ? `${meldingen.length} meldingen getoond, nieuwste bovenaan.`
+      ? meldingen.length + " meldingen getoond, nieuwste bovenaan."
       : "";
+    $("live").textContent = "live";
+    $("live").classList.remove("stil");
   } catch (e) {
     $("stand").textContent = "Kan de meldingen even niet ophalen.";
+    $("live").textContent = "geen verbinding";
+    $("live").classList.add("stil");
   }
 }
 
-/* Opbouwen en verversen */
-zetKlok();
-setInterval(zetKlok, 60000);
-vulRegios();
-haalMeldingen();
+/* ---------- Knoppen in de balk ---------- */
+function toonPaneel(open, focusOp) {
+  const paneel = $("paneel");
+  const nu = open === undefined ? paneel.hidden : open;
+  paneel.hidden = !nu;
+  $("knopFilter").setAttribute("aria-expanded", String(nu));
+  if (nu && focusOp) focusOp.focus();
+}
+
+$("knopFilter").addEventListener("click", () => toonPaneel());
+$("knopZoek").addEventListener("click", () => toonPaneel(true, $("zoek")));
+
+$("regioAlles").addEventListener("click", () => {
+  gekozenRegios.clear();
+  bewaarRegios();
+  $("regioOpties").querySelectorAll("input").forEach((v) => { v.checked = false; });
+  haalMeldingen();
+});
+
+$("knopSchermvullend").addEventListener("click", () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+});
+
+try { geluidAan = localStorage.getItem(GELUID_SLEUTEL) === "aan"; } catch (e) { /* geen opslag */ }
+function toonGeluid() {
+  $("knopGeluid").classList.toggle("aan", geluidAan);
+  $("knopGeluid").setAttribute("aria-pressed", String(geluidAan));
+}
+toonGeluid();
+$("knopGeluid").addEventListener("click", () => {
+  geluidAan = !geluidAan;
+  try { localStorage.setItem(GELUID_SLEUTEL, geluidAan ? "aan" : "uit"); } catch (e) { /* geen opslag */ }
+  toonGeluid();
+  if (geluidAan) piep();
+});
 
 ["periode", "zoek"].forEach((id) => $(id).addEventListener("input", haalMeldingen));
+
+/* ---------- Opbouwen en verversen ---------- */
+zetKlok();
+setInterval(zetKlok, 1000);
+setInterval(werkGeledenBij, 15000);
+
+vulRegios();
+haalMeldingen();
 
 setInterval(() => {
   if ($("auto").checked) { haalMeldingen(); vulRegios(); }

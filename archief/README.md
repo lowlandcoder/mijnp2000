@@ -2,8 +2,8 @@
 
 De archiefpagina `mijnp2000.lab023.nl`: een kleine backend die de
 P2000-meldingen van de broker meeleest, opslaat in een SQLite-database en toont
-in de Lab023-huisstijl, met filter op regio en een instelbare periode tot zeven
-dagen.
+op een brede, compacte pagina, met filter op regio en een instelbare periode tot
+zeven dagen.
 
 Deze container draait op de lab023-server, naast nginx en de broker. De
 ontvanger (`../ontvanger`) draait op de sdr-server en publiceert de meldingen op
@@ -13,7 +13,9 @@ MQTT; deze backend is een van de afnemers.
 
 - `app.py` — de backend: leest MQTT mee, slaat op in SQLite, vertaalt capcodes
   naar regio, schoont oude meldingen op en biedt de pagina en een JSON-API.
-- `static/` — de pagina: `index.html`, `style.css`, `script.js`, `huisstijl.css`.
+- `static/` — de pagina: `index.html`, `style.css`, `script.js`. Het bestand
+  `huisstijl.css` staat er nog wel, maar wordt niet meer ingeladen; zie
+  "Opmaak van de pagina".
 - `Dockerfile`, `requirements.txt`, `docker-compose.yml` — om de container te
   bouwen en te draaien.
 - `nginx-mijnp2000.conf` — doorschakeling met centrale aanmelding.
@@ -30,14 +32,40 @@ API en toont ze, nieuwste bovenaan. Mogelijkheden op de pagina:
 - bij een eerste bezoek staat de regio Kennemerland aan; een andere keuze wordt
   per apparaat in de browser onthouden. De standaardregio staat bovenin
   `static/script.js` in de lijst `STANDAARD_REGIOS`;
-- een steunkleur per discipline (brandweer rood, ambulance geel, politie blauw,
-  lifeliner groen), zowel in de badge als in de rand van de melding;
-- een kaartpin per melding die de locatie in Google Maps opent;
+- een kleur per dienst (brandweer rood, ambulance geel, politie blauw,
+  lifeliner paars), in de titel van de melding en in de balk links;
+- een kaartpin rechts in elke melding die de locatie in Google Maps opent;
 - een knop naar de landelijke live-kaart van p2000.page;
-- de vertaling per capcode (eenheid, plaats en regio) onder elke melding.
+- de vertaling per capcode (eenheid, dienst en regio) onder elke melding, en een
+  cursieve regel met de eenheid en de standplaats;
+- een seintje bij een nieuwe melding, aan of uit met de luidsprekerknop.
 
 Meldingen ouder dan de bewaartermijn (standaard zeven dagen, instelbaar via
 `RETENTIE_DAGEN`) worden elk uur verwijderd.
+
+## Opmaak van de pagina
+
+De pagina volgt sinds 16-08-2026 bewust niet de glaslook van de Lab023-huisstijl,
+maar de weergave van p2000.page. Reden: op een telefoon paste er in de oude
+opzet nauwelijks informatie op het scherm. De keuzes:
+
+- donkergrijze achtergrond (`#131313`) met meldingen op `#2b2b2b`, over de volle
+  breedte van het scherm en zonder afgeronde hoeken;
+- de melding zelf als vetgedrukte titel van 16 pixels, in de kleur van de dienst;
+- daaronder de tijd (uren en minuten vet, seconden lichter), een rood blokje met
+  het aantal minuten geleden, de datum, en badges voor prioriteit en regio;
+- daaronder elke capcode op een eigen regel, in grijs;
+- een grijze pinkolom rechts over de volle hoogte van de melding, die de locatie
+  in Google Maps opent;
+- een vaste balk bovenin met een lopende klok, en knoppen voor de startpagina,
+  het geluid, de filters, de landelijke kaart, zoeken en schermvullend;
+- de filters (regio, periode, zoeken, verversen) zitten achter de oranje
+  filterknop en nemen zo geen ruimte in als ze niet nodig zijn.
+
+Omdat `huisstijl.css` niet meer wordt ingeladen, heeft een wijziging in de
+gedeelde huisstijl geen gevolgen voor deze pagina. Het bestand blijft wel in
+`static/` staan, zodat `verspreid-huisstijl.ps1` zonder foutmelding blijft
+werken.
 
 ## Capcode-database: nodig voor het regiofilter
 
