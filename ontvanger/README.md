@@ -19,6 +19,30 @@ niet en geeft "PLL not locked" zonder ontvangst. De `Dockerfile` bouwt daarom
 dat stuurprogramma uit de bron. De containers voor ADS-B en RTL433 werken al,
 omdat die hun eigen, nieuwere stuurprogramma meebrengen.
 
+### Vaste stick op serienummer
+
+Er zitten twee sticks in de sdr-server. Deze ontvanger gebruikt vast de stick
+met serienummer `00000002` en de naam `p2000`; de andere stick (`00000001`)
+blijft voor ADS-B en RTL433.
+
+De keuze valt met de optie `-d` in `RTL_CMD`. Die optie neemt niet alleen een
+apparaatnummer maar ook een serienummer of een naam, en zoekt zelf de juiste
+stick op. Op serienummer kiezen is de veiliger weg: het apparaatnummer hangt af
+van de volgorde waarin de sticks worden gezien en kan bij een herstart of bij
+het loskoppelen van de andere stick verschuiven.
+
+Onder `devices` wordt de hele usb-bus doorgegeven, dus beide sticks zijn in de
+container zichtbaar. Alleen de gekozen stick wordt geopend, dus de andere
+container kan tegelijk draaien.
+
+Controleren welke sticks er zijn:
+
+    rtl_test -t
+
+Verwacht wordt een lijst met twee apparaten, waarvan één met serienummer
+`00000002`. Staat daar tweemaal `00000001`, dan is de EEPROM van de tweede
+stick nog niet geschreven; zie het beheer van de sticks in `mijnsdr`.
+
 ## Bestanden
 
 - `Dockerfile` — bouwt het image met het rtl-sdr-blog-stuurprogramma,
@@ -82,25 +106,22 @@ containers voor ADS-B en RTL433.
    Vaak volstaat het doorgeven van de hele usb-bus (`/dev/bus/usb:/dev/bus/usb`).
 5. De stack uitrollen.
 
-## Één stick: eerst testen, later vast
+## Controleren na een wijziging
 
-Er is één RTL-SDR-stick. Die kan maar op één frequentie tegelijk luisteren,
-dus P2000, ADS-B en RTL433 kunnen niet samen draaien. Voor een test wordt de
-stick tijdelijk aan P2000 gegeven:
-
-1. In Portainer de containers voor ADS-B en RTL433 stoppen.
-2. De stack `p2000-ontvanger` starten.
-3. De logboeken van de container bekijken. Verwacht: de regel "Verbonden met
-   ..." en daarna, binnen enkele minuten, publicatiemeldingen. P2000 zendt
-   doorlopend, dus er hoort snel iets binnen te komen.
-4. Meelezen op de broker om te controleren of de meldingen aankomen:
+1. De stack opnieuw uitrollen en de logboeken van de container bekijken.
+   Verwacht: een regel waarin rtl_fm meldt welk apparaat is geopend, met
+   serienummer `00000002`, en daarna de regel "Verbonden met ...". Binnen
+   enkele minuten volgen publicatiemeldingen; P2000 zendt doorlopend.
+2. Meelezen op de broker om te controleren of de meldingen aankomen:
 
        mosquitto_sub -h <broker> -t 'p2000/bericht'
 
-Na de test kan de stick terug naar ADS-B of RTL433. Zodra er een tweede stick
-is, draait P2000 vast op die tweede stick, terwijl de eerste blijft wisselen
-tussen ADS-B en RTL433. P2000 is daarvoor de beste kandidaat om continu te
-draaien, omdat de waarde in de opgebouwde geschiedenis zit.
+3. Controleren dat de andere containers nog werken. ADS-B en RTL433 horen nu
+   naast P2000 te kunnen draaien, elk op een eigen stick.
+
+Meldt rtl_fm "No supported devices found" of "usb_claim_interface error -6",
+dan pakt een andere container dezelfde stick. Controleer dan of die container
+ook op serienummer kiest en niet op apparaatnummer 0.
 
 ## Volgende stappen
 

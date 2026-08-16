@@ -15,8 +15,12 @@ services:
       MQTT_TOPIC: "p2000/bericht"
       MQTT_USER: "p2000"
       MQTT_PASSWORD: "${MQTT_PASSWORD:?stel MQTT_PASSWORD in via .env}"  # uit .env, niet in git
-      RTL_CMD: "rtl_fm -f 169.65M -M fm -s 22050 -l 0 -g 40"   # vaste gain 40 dB; werkt goed op deze plek
+      # -d 00000002 kiest de stick op serienummer, niet op apparaatnummer.
+      # Die stick draagt de naam "p2000" en is alleen voor deze ontvanger.
+      # Vaste gain 40 dB; werkt goed op deze plek.
+      RTL_CMD: "rtl_fm -d 00000002 -f 169.65M -M fm -s 22050 -l 0 -g 40"
     devices:
-      # De RTL-SDR-stick doorgeven aan de container. Controleer het pad met
-      # 'ls -l /dev/bus/usb' op de sdr-server; vaak volstaat de hele usb-bus.
+      # De hele usb-bus doorgeven, zodat beide sticks zichtbaar zijn. De keuze
+      # welke stick gebruikt wordt, valt in RTL_CMD op serienummer en niet op
+      # het apparaatnummer, want dat nummer verschuift bij een herstart.
       - "/dev/bus/usb:/dev/bus/usb"

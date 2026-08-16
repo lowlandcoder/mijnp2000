@@ -5,9 +5,14 @@
 #
 # De instelling RTL_CMD kan het rtl_fm-commando overschrijven, bijvoorbeeld om
 # gain (-g) of correctie (-p) toe te voegen als de ontvangst matig is.
+#
+# De optie -d kiest de stick. Een serienummer werkt daar net zo goed als een
+# apparaatnummer, en is de veiliger keuze: het apparaatnummer hangt af van de
+# volgorde waarin de sticks worden gezien en kan bij een herstart verschuiven.
+# Serienummer 00000002 is de stick met de naam "p2000".
 set -e
 
-RTL_CMD="${RTL_CMD:-rtl_fm -f 169.65M -M fm -s 22050 -l 0}"
+RTL_CMD="${RTL_CMD:-rtl_fm -d 00000002 -f 169.65M -M fm -s 22050 -l 0}"
 
 # DEBUG=1 laat de meldingen van rtl_fm en multimon-ng in de logs zien
 # (afstemmen, apparaat openen, decoderen). Handig om te controleren of de

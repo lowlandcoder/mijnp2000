@@ -32,12 +32,16 @@ met verplichte aanmelding.
 - [ ] Archiefpagina uitgerold op de lab023-server en capcode-lijst geplaatst.
 - [ ] Home Assistant als afnemer met meldingen naar de telefoon.
 
-## Eén stick
+## Eigen stick
 
-Er is één RTL-SDR-stick op de sdr-server, gedeeld met ADS-B en RTL433. Die kan
-maar op één frequentie tegelijk luisteren, dus P2000 draait voorlopig alleen
-als de stick daaraan is gegeven. Zodra er een tweede stick is, draait P2000
-daar vast op, terwijl de eerste blijft wisselen tussen ADS-B en RTL433.
+Sinds 16-08-2026 zitten er twee RTL-SDR-sticks in de sdr-server. De tweede
+stick heeft in de EEPROM serienummer `00000002` en de naam `p2000` gekregen en
+is vast aan deze ontvanger toegewezen. De eerste stick (`00000001`) blijft
+wisselen tussen ADS-B en RTL433.
+
+De toewijzing gebeurt met de optie `-d 00000002` in `RTL_CMD`, dus op
+serienummer en niet op apparaatnummer. Het apparaatnummer hangt af van de
+volgorde waarin de sticks worden gezien en kan bij een herstart verschuiven.
 
 ## Privacy
 
