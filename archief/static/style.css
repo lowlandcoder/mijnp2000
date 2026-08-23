@@ -141,6 +141,7 @@ body {
 .schakel input { accent-color: var(--oranje); width: 16px; height: 16px; }
 
 .paneel select,
+.paneel input[type="text"],
 .paneel input[type="search"] {
   width: 100%;
   padding: 8px 10px;
@@ -170,6 +171,13 @@ body {
   font-size: 13px;
   color: var(--tekst);
   cursor: pointer;
+}
+.schakel-boven { margin: 0 0 8px; }
+.paneel-uitleg {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--grijs);
 }
 
 .stand {

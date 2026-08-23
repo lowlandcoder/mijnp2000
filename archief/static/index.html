@@ -67,6 +67,15 @@
 
       <label class="schakel"><input id="auto" type="checkbox" checked> Automatisch verversen</label>
     </div>
+
+    <div class="paneel-vak">
+      <span class="paneel-kop">Plaatsen</span>
+      <label class="schakel schakel-boven"><input id="plaatsAan" type="checkbox"> Alleen deze plaatsen tonen</label>
+      <input id="plaatsen" type="text" placeholder="haarlem, zandvoort, …" autocomplete="off"
+             aria-label="Plaatsnamen, gescheiden door komma's">
+      <p class="paneel-uitleg">Gescheiden door komma's. Meldingen zonder een van deze
+      plaatsnamen worden verborgen zolang de schakelaar aanstaat.</p>
+    </div>
   </section>
 
   <p class="stand" id="stand"></p>

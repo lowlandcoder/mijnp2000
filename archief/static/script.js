@@ -16,8 +16,11 @@ function zetKlok() {
 
 /* ---------- Bewaarde keuzes ---------- */
 const STANDAARD_REGIOS = ["Kennemerland"];
+const STANDAARD_PLAATSEN = "haarlem, driehuis, zandvoort, bloemendaal, ijmuiden";
 const REGIO_SLEUTEL = "mijnp2000.regios";
 const GELUID_SLEUTEL = "mijnp2000.geluid";
+const PLAATSEN_SLEUTEL = "mijnp2000.plaatsen";
+const PLAATSFILTER_SLEUTEL = "mijnp2000.plaatsfilter";
 
 let eigenKeuze = false;   // true zodra er een bewaarde keuze is
 let geluidAan = false;
@@ -44,6 +47,46 @@ function bewaarRegios() {
 }
 
 let gekozenRegios = leesBewaardeRegios();
+
+/* ---------- Persoonlijk plaatsnamenfilter ----------
+   Een lijst plaatsnamen, gescheiden door komma's. Staat het filter aan, dan
+   worden alleen meldingen getoond waarin een van die plaatsnamen voorkomt:
+   in de plaats van de melding, in de tekst van de melding of in de standplaats
+   van een capcode. Er wordt op hele woorden vergeleken, zodat "haarlem" niet
+   ook Haarlemmermeer oplevert. De lijst en de stand van de schakelaar worden
+   per apparaat bewaard. */
+
+function leesPlaatsInstellingen() {
+  let tekst = STANDAARD_PLAATSEN;
+  let aan = false;
+  try {
+    const bewaard = localStorage.getItem(PLAATSEN_SLEUTEL);
+    if (bewaard !== null) tekst = bewaard;
+    aan = localStorage.getItem(PLAATSFILTER_SLEUTEL) === "aan";
+  } catch (e) { /* opslag niet beschikbaar */ }
+  return { tekst, aan };
+}
+
+function bewaarPlaatsInstellingen() {
+  try {
+    localStorage.setItem(PLAATSEN_SLEUTEL, $("plaatsen").value);
+    localStorage.setItem(PLAATSFILTER_SLEUTEL, $("plaatsAan").checked ? "aan" : "uit");
+  } catch (e) { /* opslag niet beschikbaar */ }
+}
+
+function plaatsPatronen() {
+  return $("plaatsen").value
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => new RegExp("\\b" + p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "i"));
+}
+
+function pastBijPlaatsen(m, patronen) {
+  const teksten = [m.plaats || "", m.bericht || ""];
+  for (const c of m.codes || []) if (c.plaats) teksten.push(c.plaats);
+  return patronen.some((patroon) => teksten.some((t) => patroon.test(t)));
+}
 
 /* ---------- Regiolijst in het filterpaneel ---------- */
 async function vulRegios() {
@@ -315,7 +358,17 @@ async function haalMeldingen() {
   if (zoek) params.set("zoek", zoek);
 
   try {
-    const meldingen = await (await fetch("/api/meldingen?" + params.toString())).json();
+    let meldingen = await (await fetch("/api/meldingen?" + params.toString())).json();
+
+    // Persoonlijk plaatsnamenfilter, na het ophalen toegepast in de browser.
+    let verborgen = 0;
+    const patronen = $("plaatsAan").checked ? plaatsPatronen() : [];
+    if (patronen.length) {
+      const alles = meldingen.length;
+      meldingen = meldingen.filter((m) => pastBijPlaatsen(m, patronen));
+      verborgen = alles - meldingen.length;
+    }
+
     const lijst = $("lijst");
     const nieuweSleutels = new Set();
     let aantalNieuw = 0;
@@ -336,9 +389,11 @@ async function haalMeldingen() {
     eersteRonde = false;
 
     $("leeg").hidden = meldingen.length !== 0;
-    $("stand").textContent = meldingen.length
+    let stand = meldingen.length
       ? meldingen.length + " meldingen getoond, nieuwste bovenaan."
       : "";
+    if (verborgen) stand += " Plaatsfilter verbergt " + verborgen + (verborgen === 1 ? " melding." : " meldingen.");
+    $("stand").textContent = stand;
     $("live").textContent = "live";
     $("live").classList.remove("stil");
   } catch (e) {
@@ -386,6 +441,14 @@ $("knopGeluid").addEventListener("click", () => {
 });
 
 ["periode", "zoek"].forEach((id) => $(id).addEventListener("input", haalMeldingen));
+
+/* Plaatsnamenfilter: instellingen terugzetten en wijzigingen verwerken */
+const plaatsInstellingen = leesPlaatsInstellingen();
+$("plaatsen").value = plaatsInstellingen.tekst;
+$("plaatsAan").checked = plaatsInstellingen.aan;
+
+$("plaatsAan").addEventListener("change", () => { bewaarPlaatsInstellingen(); haalMeldingen(); });
+$("plaatsen").addEventListener("input", () => { bewaarPlaatsInstellingen(); haalMeldingen(); });
 
 /* ---------- Opbouwen en verversen ---------- */
 zetKlok();

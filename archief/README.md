@@ -29,6 +29,13 @@ discipline met `data/capcodes.csv`. De pagina haalt de meldingen op via de
 API en toont ze, nieuwste bovenaan. Mogelijkheden op de pagina:
 
 - filteren op meerdere regio's tegelijk, op periode en op een zoekwoord;
+- een persoonlijk plaatsnamenfilter (sinds 23-08-2026): een lijst plaatsnamen,
+  gescheiden door komma's, met een eigen aan/uit-schakelaar in het
+  filterpaneel. Staat het aan, dan worden alleen meldingen getoond waarin een
+  van die plaatsnamen voorkomt (in de plaats, de meldingtekst of de standplaats
+  van een capcode). De vergelijking gaat op hele woorden, dus "haarlem" raakt
+  niet ook Haarlemmermeer. De regel onder de balk meldt hoeveel meldingen het
+  filter verbergt. Lijst en schakelaar worden per apparaat bewaard;
 - bij een eerste bezoek staat de regio Kennemerland aan; een andere keuze wordt
   per apparaat in de browser onthouden. De standaardregio staat bovenin
   `static/script.js` in de lijst `STANDAARD_REGIOS`;
