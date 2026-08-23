@@ -1,8 +1,9 @@
 // Werking van de MijnP2000-pagina.
 // De weergave volgt p2000.page: een balk bovenin met klok en knoppen, filters
-// achter een knop, en per melding een brede regel met een gekleurde titel per
-// dienst, de tijd met het aantal minuten geleden, de capcodes met vertaling en
-// een pin rechts naar de kaart.
+// achter een knop, en per melding een compacte regel met een gekleurde titel
+// per dienst, de tijd met het aantal minuten geleden en een pin rechts naar de
+// kaart. De capcodes met vertaling staan standaard ingeklapt; een tik op de
+// melding klapt ze uit.
 
 const $ = (id) => document.getElementById(id);
 
@@ -22,6 +23,7 @@ let eigenKeuze = false;   // true zodra er een bewaarde keuze is
 let geluidAan = false;
 let eersteRonde = true;   // bij het opbouwen geen seintje en geen oplichten
 let bekendeSleutels = new Set();
+let openSleutels = new Set();  // meldingen waarvan de capcodes zijn uitgeklapt
 
 function leesBewaardeRegios() {
   try {
@@ -135,7 +137,7 @@ function kaartZoekterm(m) {
 const PIN_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"></path></svg>';
 
 /* ---------- Eén melding opbouwen ---------- */
-function maakMelding(m, isNieuw) {
+function maakMelding(m, isNieuw, sleutel) {
   const rij = document.createElement("article");
   rij.className = "melding dienst-" + hoofdKlasse(m) + (isNieuw ? " nieuw" : "");
 
@@ -193,10 +195,22 @@ function maakMelding(m, isNieuw) {
     badge.textContent = regio;
     meta.appendChild(badge);
   }
-  inhoud.appendChild(meta);
-
-  // Capcodes met vertaling
+  // Capcodes met vertaling. Het blok staat standaard ingeklapt; een tik op de
+  // melding klapt het uit en weer in. De keuze blijft bewaard bij het verversen.
   if (m.codes && m.codes.length) {
+    const open = openSleutels.has(sleutel);
+
+    const wissel = document.createElement("span");
+    wissel.className = "badge capwissel" + (open ? " open" : "");
+    wissel.innerHTML = '<span class="pijl">▸</span> ' + m.codes.length +
+      (m.codes.length === 1 ? " capcode" : " capcodes");
+    meta.appendChild(wissel);
+    inhoud.appendChild(meta);
+
+    const capblok = document.createElement("div");
+    capblok.className = "capblok";
+    capblok.hidden = !open;
+
     const codes = document.createElement("div");
     codes.className = "codes";
     for (const c of m.codes) {
@@ -210,7 +224,7 @@ function maakMelding(m, isNieuw) {
       regel.appendChild(document.createTextNode(delen.length ? delen.join(" / ") : "onbekende capcode"));
       codes.appendChild(regel);
     }
-    inhoud.appendChild(codes);
+    capblok.appendChild(codes);
 
     // Eenheid als extra regel: alleen capcodes van een eenheid met een eigen
     // standplaats. Monitorcodes van de meldkamer en regels zonder plaats staan
@@ -226,8 +240,25 @@ function maakMelding(m, isNieuw) {
       const eenheid = document.createElement("div");
       eenheid.className = "eenheid";
       eenheid.textContent = eenheden.join(" · ");
-      inhoud.appendChild(eenheid);
+      capblok.appendChild(eenheid);
     }
+
+    inhoud.appendChild(capblok);
+
+    // Tik op de melding: capcodes tonen of verbergen. Een klik die tekst
+    // selecteert of op een koppeling valt, telt niet als tik.
+    rij.classList.add("klapbaar");
+    inhoud.addEventListener("click", (e) => {
+      if (e.target.closest("a")) return;
+      const selectie = window.getSelection();
+      if (selectie && !selectie.isCollapsed) return;
+      const nuOpen = capblok.hidden;
+      capblok.hidden = !nuOpen;
+      wissel.classList.toggle("open", nuOpen);
+      if (nuOpen) openSleutels.add(sleutel); else openSleutels.delete(sleutel);
+    });
+  } else {
+    inhoud.appendChild(meta);
   }
 
   rij.appendChild(inhoud);
@@ -295,10 +326,12 @@ async function haalMeldingen() {
       nieuweSleutels.add(sleutel);
       const isNieuw = !eersteRonde && !bekendeSleutels.has(sleutel);
       if (isNieuw) aantalNieuw++;
-      lijst.appendChild(maakMelding(m, isNieuw));
+      lijst.appendChild(maakMelding(m, isNieuw, sleutel));
     }
 
     bekendeSleutels = nieuweSleutels;
+    // Uitgeklapte meldingen die uit de lijst zijn verdwenen, vergeten.
+    for (const s of [...openSleutels]) if (!nieuweSleutels.has(s)) openSleutels.delete(s);
     if (aantalNieuw && geluidAan) piep();
     eersteRonde = false;
 

@@ -13,7 +13,9 @@ ontvanger en meerdere afnemers, met MQTT als schakelpunt:
   lab023-server leest MQTT, schrijft de meldingen in een SQLite-database,
   vertaalt capcodes naar regio, en toont ze met filter op regio en instelbare
   geschiedenis tot zeven dagen. De opmaak volgt sinds 16-08-2026 de compacte
-  weergave van p2000.page; zie `archief/README.md`.
+  weergave van p2000.page; sinds 23-08-2026 met kleinere letters en standaard
+  ingeklapte capcodes, en met een samengevoegde capcode-lijst van ± 88.000
+  codes. Zie `archief/README.md`.
 
 De broker draait al: Mosquitto op de lab023-server (192.168.2.38), poort 1883,
 met verplichte aanmelding.
@@ -32,6 +34,8 @@ met verplichte aanmelding.
 - [x] Archiefpagina met database en regiofilter gebouwd.
 - [x] Archiefpagina uitgerold op de lab023-server en capcode-lijst geplaatst.
 - [x] Opmaak van de pagina naar het voorbeeld van p2000.page (16-08-2026).
+- [x] Capcodes standaard ingeklapt, kleinere letters en samengevoegde
+      capcode-lijst van ± 88.000 codes (23-08-2026).
 - [ ] Home Assistant als afnemer met meldingen naar de telefoon.
 
 ## Eigen stick

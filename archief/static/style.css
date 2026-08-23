@@ -35,7 +35,7 @@ body {
   min-height: 100vh;
   background: var(--bg);
   color: var(--tekst);
-  font: 15px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font: 13px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -179,26 +179,27 @@ body {
 }
 
 /* ---------- Lijst met meldingen ---------- */
-.lijst { display: flex; flex-direction: column; gap: 6px; }
+.lijst { display: flex; flex-direction: column; gap: 3px; }
 
 .melding {
   display: flex;
   align-items: stretch;
   background: var(--rij);
-  border-left: 5px solid var(--overig-rand);
+  border-left: 4px solid var(--overig-rand);
 }
 .melding:hover { background: var(--rij-hover); }
+.melding.klapbaar .rij-inhoud { cursor: pointer; }
 
 .rij-inhoud {
   flex: 1 1 auto;
   min-width: 0;
-  padding: 9px 10px 10px 11px;
+  padding: 5px 8px 6px 9px;
 }
 
 .titel {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
   color: var(--overig);
   overflow-wrap: anywhere;
 }
@@ -207,17 +208,17 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 7px;
-  margin-top: 3px;
-  font-size: 13.5px;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 11.5px;
   color: var(--grijs-licht);
   font-variant-numeric: tabular-nums;
 }
 .tijd { color: var(--grijs-licht); }
 .tijd b { color: #ffffff; font-weight: 700; }
 .geleden {
-  padding: 1px 5px;
-  font-size: 11.5px;
+  padding: 0 4px;
+  font-size: 10.5px;
   font-weight: 600;
   color: #fff;
   background: var(--rood);
@@ -227,8 +228,8 @@ body {
 .datum { color: var(--grijs); }
 
 .badge {
-  padding: 1px 7px;
-  font-size: 11px;
+  padding: 0 6px;
+  font-size: 10px;
   font-weight: 600;
   border: 1px solid #555;
   border-radius: 999px;
@@ -238,18 +239,28 @@ body {
 .badge.prio2 { color: var(--ambulance); border-color: rgba(222, 222, 42, .55); }
 .badge.regio { color: #9ec9f5; border-color: rgba(158, 201, 245, .45); }
 
-.codes { margin-top: 4px; }
+/* Wissel voor het capcodeblok: aantal capcodes met een draaiend pijltje */
+.badge.capwissel { color: var(--grijs); border-color: #4a4a4a; }
+.capwissel .pijl {
+  display: inline-block;
+  transition: transform .15s ease;
+}
+.capwissel.open .pijl { transform: rotate(90deg); }
+
+.capblok[hidden] { display: none; }
+
+.codes { margin-top: 3px; }
 .code {
-  font-size: 13px;
-  line-height: 1.35;
+  font-size: 11.5px;
+  line-height: 1.3;
   color: var(--grijs);
   overflow-wrap: anywhere;
 }
 .code .nr { font-variant-numeric: tabular-nums; margin-right: 6px; }
 .eenheid {
   margin-top: 2px;
-  padding-left: 26px;
-  font-size: 13px;
+  padding-left: 24px;
+  font-size: 11.5px;
   font-style: italic;
   color: #9a9a9a;
   overflow-wrap: anywhere;
@@ -267,7 +278,7 @@ body {
 
 /* Pin rechts, over de volle hoogte van de melding */
 .pin {
-  flex: 0 0 62px;
+  flex: 0 0 46px;
   display: grid;
   place-items: center;
   background: #363636;
@@ -275,7 +286,7 @@ body {
   text-decoration: none;
 }
 .pin:hover { background: #434343; color: #cfcfcf; }
-.pin svg { width: 26px; height: 26px; fill: currentColor; }
+.pin svg { width: 21px; height: 21px; fill: currentColor; }
 
 .leeg {
   padding: 40px 12px;
@@ -297,13 +308,17 @@ body {
 }
 .melding.nieuw { animation: nieuw 4s ease-out 1; }
 
-/* Smalle schermen: iets krappere maten */
+/* Smalle schermen: nog krappere maten, zodat er veel meldingen passen */
 @media (max-width: 480px) {
-  .balk { padding: 7px 6px; gap: 6px; }
+  .balk { padding: 6px 6px; gap: 6px; }
   .knoppen { gap: 5px; }
-  .knop { width: 35px; height: 36px; }
-  .knop svg { width: 19px; height: 19px; }
-  .klok { font-size: 18px; }
-  .titel { font-size: 15.5px; }
-  .pin { flex-basis: 52px; }
+  .knop { width: 34px; height: 34px; }
+  .knop svg { width: 18px; height: 18px; }
+  .klok { font-size: 17px; }
+  .titel { font-size: 13px; }
+  .meta { font-size: 11px; gap: 5px; }
+  .code, .eenheid { font-size: 11px; }
+  .rij-inhoud { padding: 4px 7px 5px 8px; }
+  .pin { flex-basis: 38px; }
+  .pin svg { width: 18px; height: 18px; }
 }

@@ -36,8 +36,10 @@ API en toont ze, nieuwste bovenaan. Mogelijkheden op de pagina:
   lifeliner paars), in de titel van de melding en in de balk links;
 - een kaartpin rechts in elke melding die de locatie in Google Maps opent;
 - een knop naar de landelijke live-kaart van p2000.page;
-- de vertaling per capcode (eenheid, dienst en regio) onder elke melding, en een
-  cursieve regel met de eenheid en de standplaats;
+- de vertaling per capcode (eenheid, dienst en regio) en een cursieve regel met
+  de eenheid en de standplaats. Dit blok staat sinds 23-08-2026 standaard
+  ingeklapt; een tik op de melding klapt het uit en weer in. Het aantal
+  capcodes staat in een klein wisselknopje in de metaregel;
 - een seintje bij een nieuwe melding, aan of uit met de luidsprekerknop.
 
 Meldingen ouder dan de bewaartermijn (standaard zeven dagen, instelbaar via
@@ -51,10 +53,13 @@ opzet nauwelijks informatie op het scherm. De keuzes:
 
 - donkergrijze achtergrond (`#131313`) met meldingen op `#2b2b2b`, over de volle
   breedte van het scherm en zonder afgeronde hoeken;
-- de melding zelf als vetgedrukte titel van 16 pixels, in de kleur van de dienst;
+- de melding zelf als vetgedrukte titel van 14 pixels (13 op de telefoon), in de
+  kleur van de dienst. Op 23-08-2026 zijn alle letters, marges en de pinkolom
+  verkleind, zodat er op een telefoon meer meldingen op het scherm passen;
 - daaronder de tijd (uren en minuten vet, seconden lichter), een rood blokje met
   het aantal minuten geleden, de datum, en badges voor prioriteit en regio;
-- daaronder elke capcode op een eigen regel, in grijs;
+- daaronder de capcodes, elk op een eigen regel in grijs, standaard ingeklapt en
+  uit te klappen met een tik op de melding;
 - een grijze pinkolom rechts over de volle hoogte van de melding, die de locatie
   in Google Maps opent;
 - een vaste balk bovenin met een lopende klok, en knoppen voor de startpagina,
@@ -76,16 +81,32 @@ Het bestand `data/capcodes.csv` heeft vijf kolommen: `capcode`, `regio`,
 `discipline`, `plaats`, `omschrijving`. De `omschrijving` levert de vertaling
 per capcode op de pagina (bijvoorbeeld "Ambulance 12-162").
 
-De landelijke lijst wordt gemaakt met de omzetter uit `tools/`, uit de openbare
-export van p2000.bommel.net (alle veiligheidsregio's):
+De lijst staat in de repository en wordt gemaakt met de omzetter uit `tools/`,
+uit twee openbare bronnen:
+
+  * p2000.bommel.net (landelijk, actueel maar beknopt, zo'n 9.600 capcodes);
+  * cyberjunky/RTL-SDR-P2000Receiver-HA op GitHub (zeer volledig, zo'n 88.000
+    capcodes, maar sinds 2023 niet meer bijgewerkt).
+
+De omzetter voegt beide samen: de eerste bron wint, latere bronnen vullen
+alleen ontbrekende capcodes en lege velden aan. Regionamen worden daarbij
+gelijkgetrokken naar de schrijfwijze van bommel.net, zodat het regiofilter geen
+dubbele regio's toont. Sinds 23-08-2026 staat de samengevoegde lijst
+(± 88.000 capcodes) in `data/capcodes.csv`.
+
+Verversen kan op de server (of op de pc, daarna committen en pushen):
 
     curl -s -o /tmp/bommel.csv https://p2000.bommel.net/cap2csv.php
-    python3 tools/converteer_capcodes.py /tmp/bommel.csv data/capcodes.csv
+    curl -s -o /tmp/cyberjunky.txt https://raw.githubusercontent.com/cyberjunky/RTL-SDR-P2000Receiver-HA/main/db_capcodes.txt
+    python3 tools/converteer_capcodes.py /tmp/bommel.csv /tmp/cyberjunky.txt data/capcodes.csv
     sudo docker compose restart mijnp2000-archief
 
-De omzetter herkent ook het formaat van cyberjunky/RTL-SDR-P2000Receiver-HA.
 Het aantal geladen capcodes staat in het logboek bij het opstarten. De lijst
-veroudert langzaam; verversen kan door deze drie regels opnieuw te draaien.
+veroudert langzaam; verversen hoeft maar af en toe. Let op: gebeurt het
+verversen op de server, dan wijkt `data/capcodes.csv` daar af van de
+repository en kan een volgende `git pull` weigeren. Herstel dat met
+`git checkout -- archief/data/capcodes.csv` of verwerk de verversing voortaan
+via de pc en de repository.
 
 ## Instellingen
 
@@ -139,5 +160,7 @@ publiceren.
 
 ## Geheimen
 
-Het wachtwoord staat in `.env` en blijft buiten de repository. De database en de
-echte capcode-lijst staan in `data/` en worden niet meegecommit.
+Het wachtwoord staat in `.env` en blijft buiten de repository. De database
+staat in het gekoppelde volume en wordt niet meegecommit; de capcode-lijst
+`data/capcodes.csv` staat wel in de repository, want die bevat alleen openbare
+gegevens.
