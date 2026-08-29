@@ -96,10 +96,10 @@ opnieuw de telefoon laten trillen.
 
    Zet `ALLEEN_MELDEN=1` zolang de waakhond nog wordt beproefd.
 
-4. Beproeven zonder timer:
+4. Beproeven zonder timer. Dit kijkt alleen en verandert niets:
 
-       sudo -u peter env $(sudo cat /etc/mijnp2000/waakhond.env | grep -v '^#' | xargs) \
-         python3 /opt/mijnp2000-waakhond/waakhond.py --stand
+       sudo bash -c 'set -a; . /etc/mijnp2000/waakhond.env; set +a; \
+         python3 /opt/mijnp2000-waakhond/waakhond.py --stand'
 
 5. De timer aanzetten:
 
@@ -119,7 +119,19 @@ opnieuw de telefoon laten trillen.
 | `waakhond.py --stand` | alleen kijken: hartslag, oordeel, containerstand, kanalen |
 | `waakhond.py --droog` | een hele ronde, wel melden maar niet herstarten |
 | `waakhond.py --proef` | een proefmelding over alle kanalen die aanstaan |
-| `systemctl start mijnp2000-waakhond.service` | een ronde nu, zoals de timer die doet |
+| `sudo systemctl start mijnp2000-waakhond.service` | een ronde nu, zoals de timer die doet |
+
+De drie eerste regels vragen om de instellingen. Met de hand gaat dat zo:
+
+    sudo bash -c 'set -a; . /etc/mijnp2000/waakhond.env; set +a; \
+      python3 /opt/mijnp2000-waakhond/waakhond.py --proef'
+
+Een hele ronde kan beter via systemd lopen dan met de hand. De dienst draait
+als `peter` en schrijft `status.json` in de map die systemd aanmaakt; met de
+hand als root gestart zou dat bestand van root worden, en dan kan de dienst er
+daarna niet meer bij. Met de hand alleen `--stand` en `--proef`, want die
+schrijven niets. De uitvoer van een ronde staat in
+`journalctl -u mijnp2000-waakhond.service -n 30`.
 
 Meekijken op de hartslag zelf:
 
