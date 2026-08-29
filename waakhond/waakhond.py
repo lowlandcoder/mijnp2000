@@ -136,10 +136,12 @@ def ouderdom(moment) -> float:
     return max(0.0, (nu() - moment).total_seconds())
 
 
-def minuten(seconden) -> str:
+def duur(seconden) -> str:
+    """Een duur in hele minuten, met het juiste enkelvoud."""
     if seconden == float("inf"):
-        return "onbekend"
-    return str(int(round(seconden / 60)))
+        return "onbekend lang"
+    aantal = int(round(seconden / 60))
+    return f"{aantal} minuut" if aantal == 1 else f"{aantal} minuten"
 
 
 # ── De hartslag ophalen ─────────────────────────────────────────────────────
@@ -303,8 +305,8 @@ def beoordeel(inst, hartslag) -> dict:
     if oud > grens_hartslag:
         return {
             "soort": "hartslag_oud",
-            "uitleg": (f"De laatste hartslag is {minuten(oud)} minuten oud; "
-                       "het proces in de container reageert niet meer."),
+            "uitleg": (f"De laatste hartslag is {duur(oud)} oud; het proces "
+                       "in de container reageert niet meer."),
             "stilte": stilte,
             "hartslag_ouderdom": oud,
         }
@@ -312,15 +314,15 @@ def beoordeel(inst, hartslag) -> dict:
     if stilte > inst["stil_minuten"] * 60:
         return {
             "soort": "verwerking_gestopt",
-            "uitleg": (f"Er is al {minuten(stilte)} minuten niets meer "
-                       "gedecodeerd, terwijl de ontvanger wel doorloopt."),
+            "uitleg": (f"Er is al {duur(stilte)} niets meer gedecodeerd, "
+                       "terwijl de ontvanger wel doorloopt."),
             "stilte": stilte,
             "hartslag_ouderdom": oud,
         }
 
     return {
         "soort": "in_orde",
-        "uitleg": f"Laatste melding {minuten(stilte)} minuten geleden.",
+        "uitleg": f"Laatste melding {duur(stilte)} geleden.",
         "stilte": stilte,
         "hartslag_ouderdom": oud,
     }
@@ -330,11 +332,11 @@ def beoordeel(inst, hartslag) -> dict:
 
 def maak_bericht(inst, oordeel, herstart_gedaan, aantal_herstarts) -> dict:
     soort = oordeel["soort"]
-    stil = minuten(oordeel["stilte"])
+    stil = duur(oordeel["stilte"])
 
     if soort == "in_orde":
         titel = "MijnP2000 verwerkt weer meldingen"
-        tekst = f"De verwerking loopt weer. Laatste melding {stil} minuten geleden."
+        tekst = f"De verwerking loopt weer. Laatste melding {stil} geleden."
     elif soort == "container_uit":
         titel = "MijnP2000-ontvanger staat uit"
         tekst = ("De container p2000-ontvanger draait niet. Er is niets "
@@ -346,7 +348,7 @@ def maak_bericht(inst, oordeel, herstart_gedaan, aantal_herstarts) -> dict:
                  "sdr-server antwoordt niet. Herstarten lukt daardoor niet.")
     elif soort == "limiet":
         titel = "MijnP2000 blijft stil na herstarten"
-        tekst = (f"De verwerking ligt al {stil} minuten stil en herstarten "
+        tekst = (f"De verwerking ligt al {stil} stil en herstarten "
                  f"heeft niet geholpen ({aantal_herstarts} keer geprobeerd). "
                  "Waarschijnlijk zit het in de antenne, de plaatsing of de "
                  "versterking.")
@@ -360,11 +362,11 @@ def maak_bericht(inst, oordeel, herstart_gedaan, aantal_herstarts) -> dict:
                    "en of de broker bereikbaar is.")
     elif herstart_gedaan:
         titel = "MijnP2000 opnieuw gestart"
-        tekst = (f"De verwerking lag {stil} minuten stil. De container "
+        tekst = (f"De verwerking lag {stil} stil. De container "
                  "p2000-ontvanger is opnieuw gestart.")
     else:
         titel = "MijnP2000 verwerkt geen meldingen meer"
-        tekst = f"De verwerking ligt {stil} minuten stil. {oordeel['uitleg']}"
+        tekst = f"De verwerking ligt {stil} stil. {oordeel['uitleg']}"
 
     return {
         "verzonden": nu().isoformat(timespec="seconds"),
