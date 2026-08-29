@@ -145,12 +145,17 @@ def minuten(seconden) -> str:
 # ── De hartslag ophalen ─────────────────────────────────────────────────────
 
 def _mqtt_client(client_id):
-    """Maakt een client die zowel met paho 1 als met paho 2 werkt."""
+    """Maakt een client die zowel met paho 1 als met paho 2 werkt.
+
+    Op server023 staat paho 2; die wil weten welke terugroepfuncties worden
+    gebruikt. De oude vorm werkt daar nog wel, maar geeft een waarschuwing.
+    De terugroepfuncties hieronder passen op allebei de vormen.
+    """
     import paho.mqtt.client as mqtt
-    try:  # paho 2 wil weten welke terugroepfuncties worden gebruikt
-        return mqtt.Client(mqtt.CallbackAPIVersion.VERSION1,
+    try:
+        return mqtt.Client(mqtt.CallbackAPIVersion.VERSION2,
                            client_id=client_id)
-    except AttributeError:  # paho 1
+    except AttributeError:  # paho 1 kent die keuze niet
         return mqtt.Client(client_id=client_id)
 
 
@@ -164,7 +169,9 @@ def lees_hartslag(inst):
     gevonden = {}
     klaar = threading.Event()
 
-    def bij_verbinding(client, userdata, flags, rc):
+    # paho 1 geeft vier waarden mee, paho 2 vijf. Met standaardwaarden past
+    # dezelfde functie op allebei.
+    def bij_verbinding(client, userdata, flags, reden=None, eigenschappen=None):
         client.subscribe(inst["status_topic"], qos=0)
 
     def bij_bericht(client, userdata, bericht):
