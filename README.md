@@ -25,6 +25,26 @@ met verplichte aanmelding.
 - `ontvanger/` — de P2000-ontvangercontainer. Zie `ontvanger/README.md`.
 - `archief/` — de backend en de pagina `mijnp2000.lab023.nl`. Zie
   `archief/README.md`.
+- `waakhond/` — bewaking op server023 die elk kwartier controleert of de
+  verwerking nog loopt, de ontvanger zo nodig herstart en dat meldt. Zie
+  `waakhond/README.md`.
+- `homeassistant/` — de automatisering die van een waakhondmelding een
+  telefoonmelding maakt.
+
+## Bewaking
+
+Sinds 29-08-2026 zet de ontvanger elke minuut een bewaard bericht op
+`p2000/status` met de tijd van de laatste gedecodeerde melding. De waakhond op
+server023 leest die stand elk kwartier.
+
+Dat vult een gat dat Docker niet dicht: valt `rtl_fm` weg, dan stopt de
+container en start Docker hem vanzelf opnieuw, maar blijft de keten leven
+terwijl er niets meer gedecodeerd wordt, dan heet de container nog steeds
+"draait" en loopt de pagina stil achter. Bij een stilte van meer dan 30
+minuten vraagt de waakhond de containerstand op bij `mijnsdr-bediening` op de
+sdr-server, herstart hij de ontvanger en meldt hij dat via mail en via Home
+Assistant. Hoogstens drie herstarts per zes uur; daarna volgt alleen nog een
+melding, want een herstart repareert geen slecht afgestemde antenne.
 
 ## Stand van zaken
 
@@ -36,7 +56,11 @@ met verplichte aanmelding.
 - [x] Opmaak van de pagina naar het voorbeeld van p2000.page (16-08-2026).
 - [x] Capcodes standaard ingeklapt, kleinere letters en samengevoegde
       capcode-lijst van ± 88.000 codes (23-08-2026).
-- [ ] Home Assistant als afnemer met meldingen naar de telefoon.
+- [x] Hartslag op `p2000/status` en waakhond op server023, met herstart via
+      de bedieningsdienst en meldingen via mail en Home Assistant
+      (29-08-2026).
+- [ ] Home Assistant als afnemer van de meldingen zelf, met filters per regio
+      en seintjes naar de telefoon.
 
 ## Eigen stick
 

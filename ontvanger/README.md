@@ -76,17 +76,55 @@ In Portainer onder `environment` in te vullen:
 | `MQTT_HOST` | adres van de broker (lab023-server) | `192.168.2.38` |
 | `MQTT_PORT` | poort van de broker | `1883` |
 | `MQTT_TOPIC` | onderwerp om op te publiceren | `p2000/bericht` |
-| `MQTT_USER` | gebruikersnaam op de broker | `admin_mosquitto` |
+| `MQTT_USER` | gebruikersnaam op de broker | `p2000` |
 | `MQTT_PASSWORD` | wachtwoord | *invullen* |
 | `RTL_CMD` | het rtl_fm-commando; hier met vaste gain 40 dB | zie `docker-compose.yml` |
+| `STATUS_TOPIC` | onderwerp voor de hartslag; leeg zet de hartslag uit | `p2000/status` |
+| `STATUS_SECONDEN` | tijd tussen twee hartslagen | `60` |
 
 Een vaste gain van 40 dB blijkt op deze plek goed te werken; automatische gain
 gaf geen ontvangst. Bij een andere antenne of plek kan een andere waarde nodig
 zijn (probeer bijvoorbeeld 28 of 49.6).
 
 De broker draait als Mosquitto op de lab023-server (192.168.2.38), met poort
-1883 gepubliceerd en verplichte aanmelding. De gebruiker `admin_mosquitto` en
-het wachtwoord zijn dezelfde als in de broker en in Zigbee2MQTT.
+1883 gepubliceerd en verplichte aanmelding. De ontvanger en de archiefpagina
+gebruiken allebei het account `p2000`; het wachtwoord staat in `.env` naast
+het compose-bestand en niet in de repository.
+
+## Hartslag voor de waakhond
+
+Sinds 29-08-2026 zet de ontvanger elke minuut een **bewaard** bericht op
+`p2000/status`. Daarin staat wanneer de laatste melding is gedecodeerd en
+hoeveel er sinds de vorige hartslag bij kwamen:
+
+    {
+      "verzonden": "2026-08-29T12:05:50+00:00",
+      "gestart": "2026-08-29T09:31:12+00:00",
+      "laatste_melding": "2026-08-29T12:05:44+00:00",
+      "stil_seconden": 6,
+      "sinds_vorige_hartslag": 14,
+      "totaal": 8123,
+      "hartslag_seconden": 60
+    }
+
+Waarom dit nodig is: valt `rtl_fm` weg, dan krijgt `publiceer.py` einde-invoer,
+stopt de container en start Docker hem vanzelf opnieuw. Maar blijft de keten
+leven terwijl `multimon-ng` niets meer decodeert, dan ziet Docker daar niets
+van. De container heet dan nog steeds "draait", terwijl er niets meer
+binnenkomt. Aan `stil_seconden` is dat wel te zien.
+
+Het bericht is bewaard (retain), zodat de waakhond op server023 de laatste
+stand in een keer kan ophalen zonder mee te luisteren. Het gaat zonder
+bevestiging (qos 0) de deur uit: het bericht komt elke minuut opnieuw, dus een
+gemist bericht doet er niet toe, en er groeit geen wachtrij als de broker even
+weg is. De hartslag draait in een eigen draad, want de hoofdlus staat juist
+stil zodra er niets meer binnenkomt.
+
+Meekijken:
+
+    mosquitto_sub -h 192.168.2.38 -u p2000 -P <wachtwoord> -t 'p2000/status' -v
+
+Wat er met deze stand gebeurt, staat in `../waakhond/README.md`.
 
 ## Inrichting via Portainer
 

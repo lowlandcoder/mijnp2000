@@ -14,11 +14,24 @@ Instellingen komen uit omgevingsvariabelen (in Portainer in te vullen):
   MQTT_USER      gebruikersnaam, leeg = geen aanmelding  (optioneel)
   MQTT_PASSWORD  wachtwoord                              (optioneel)
   MQTT_CLIENT_ID naam van de verbinding                  (standaard p2000-ontvanger)
+  STATUS_TOPIC   onderwerp voor de hartslag, leeg = uit  (standaard p2000/status)
+  STATUS_SECONDEN tijd tussen twee hartslagen in seconden (standaard 60)
+
+Naast de meldingen gaat er een hartslag uit: elke STATUS_SECONDEN een bewaard
+bericht op STATUS_TOPIC met de tijd van de laatste verwerkte melding, het
+aantal sinds de vorige hartslag en de tijd van de hartslag zelf. Doordat het
+bericht bewaard is (retain), kan een afnemer die stand in een keer ophalen
+zonder mee te luisteren op de meldingen. De waakhond op server023 gebruikt dat
+om te zien of de verwerking nog loopt.
+
+Blijft STATUS_TOPIC leeg, dan gaat er geen hartslag uit en werkt de ontvanger
+precies als voorheen.
 """
 
 import json
 import os
 import sys
+import threading
 import time
 from datetime import datetime, timezone
 
@@ -30,6 +43,18 @@ MQTT_TOPIC = os.environ.get("MQTT_TOPIC", "p2000/bericht")
 MQTT_USER = os.environ.get("MQTT_USER", "")
 MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD", "")
 MQTT_CLIENT_ID = os.environ.get("MQTT_CLIENT_ID", "p2000-ontvanger")
+STATUS_TOPIC = os.environ.get("STATUS_TOPIC", "p2000/status")
+STATUS_SECONDEN = int(os.environ.get("STATUS_SECONDEN", "60"))
+
+# De stand van de verwerking. De hoofdlus telt erin, de hartslagdraad leest
+# hem uit. Het slot houdt de teller en het tijdstip bij elkaar.
+_slot = threading.Lock()
+_stand = {
+    "gestart": datetime.now(timezone.utc),
+    "laatste_melding": None,
+    "totaal": 0,
+    "sinds_vorige_hartslag": 0,
+}
 
 
 def maak_verbinding():
@@ -75,14 +100,75 @@ def ontleed(regel):
     }
 
 
+def tel_melding():
+    """Legt vast dat er zojuist een melding is gedecodeerd."""
+    with _slot:
+        _stand["laatste_melding"] = datetime.now(timezone.utc)
+        _stand["totaal"] += 1
+        _stand["sinds_vorige_hartslag"] += 1
+
+
+def hartslag_bericht():
+    """Bouwt het hartslagbericht en zet de teller van de periode terug."""
+    nu = datetime.now(timezone.utc)
+    with _slot:
+        laatste = _stand["laatste_melding"]
+        sinds = _stand["sinds_vorige_hartslag"]
+        _stand["sinds_vorige_hartslag"] = 0
+        bericht = {
+            "verzonden": nu.isoformat(timespec="seconds"),
+            "gestart": _stand["gestart"].isoformat(timespec="seconds"),
+            "laatste_melding": (laatste.isoformat(timespec="seconds")
+                                if laatste else None),
+            "stil_seconden": (int((nu - laatste).total_seconds())
+                              if laatste else None),
+            "sinds_vorige_hartslag": sinds,
+            "totaal": _stand["totaal"],
+            "hartslag_seconden": STATUS_SECONDEN,
+        }
+    return bericht
+
+
+def hartslag_lus(client):
+    """Zet elke STATUS_SECONDEN de stand als bewaard bericht op de broker.
+
+    Dit draait in een eigen draad. De hoofdlus staat namelijk stil zodra er
+    niets meer binnenkomt, en juist dat geval moet gemeld worden.
+
+    Bewaard (retain), zodat de waakhond de laatste stand in een keer kan
+    ophalen. Zonder bevestiging (qos 0): het bericht komt elke minuut opnieuw,
+    dus een gemist bericht doet er niet toe, en er groeit geen wachtrij als de
+    broker even weg is.
+    """
+    while True:
+        try:
+            client.publish(
+                STATUS_TOPIC,
+                json.dumps(hartslag_bericht(), ensure_ascii=False),
+                qos=0,
+                retain=True,
+            )
+        except Exception as fout:  # broker even weg: volgende ronde opnieuw
+            sys.stderr.write(f"Hartslag mislukt: {fout}\n")
+        time.sleep(STATUS_SECONDEN)
+
+
 def main():
     client = maak_verbinding()
     sys.stderr.write(f"Verbonden met {MQTT_HOST}:{MQTT_PORT}, publiceert op '{MQTT_TOPIC}'.\n")
+
+    if STATUS_TOPIC and STATUS_SECONDEN > 0:
+        threading.Thread(target=hartslag_lus, args=(client,), daemon=True).start()
+        sys.stderr.write(
+            f"Hartslag elke {STATUS_SECONDEN} s op '{STATUS_TOPIC}'.\n")
 
     for regel in sys.stdin:
         melding = ontleed(regel)
         if melding is None:
             continue
+        # Tellen zodra de melding is gedecodeerd, dus voor het publiceren.
+        # Zo meet de hartslag de verwerking zelf en niet de broker.
+        tel_melding()
         try:
             client.publish(MQTT_TOPIC, json.dumps(melding, ensure_ascii=False), qos=1)
         except Exception as fout:  # verbinding kort weg: doorgaan, paho herstelt zelf

@@ -7,3 +7,6 @@ Thumbs.db
 # Gegevens van de archiefbackend: de database (wel de capcode-lijst meenemen).
 archief/data/*.db
 archief/data/*.db-*
+
+# Vertaalde Python-bestanden.
+__pycache__/

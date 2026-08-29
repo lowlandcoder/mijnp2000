@@ -1,0 +1,13 @@
+[Unit]
+Description=Waakhond MijnP2000: controleert of de verwerking nog loopt
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=peter
+EnvironmentFile=/etc/mijnp2000/waakhond.env
+# Maakt /var/lib/mijnp2000-waakhond aan en geeft die aan de gebruiker
+# hierboven. Daar staat status.json met de laatste stand.
+StateDirectory=mijnp2000-waakhond
+ExecStart=/usr/bin/python3 /opt/mijnp2000-waakhond/waakhond.py

@@ -15,6 +15,10 @@ services:
       MQTT_TOPIC: "p2000/bericht"
       MQTT_USER: "p2000"
       MQTT_PASSWORD: "${MQTT_PASSWORD:?stel MQTT_PASSWORD in via .env}"  # uit .env, niet in git
+      # Hartslag voor de waakhond: elke minuut een bewaard bericht met de
+      # stand van de verwerking. Leeg laten zet de hartslag uit.
+      STATUS_TOPIC: "p2000/status"
+      STATUS_SECONDEN: "60"
       # -d 00000002 kiest de stick op serienummer, niet op apparaatnummer.
       # Die stick draagt de naam "p2000" en is alleen voor deze ontvanger.
       # Vaste gain 40 dB; werkt goed op deze plek.

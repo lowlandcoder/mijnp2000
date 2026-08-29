@@ -1,0 +1,49 @@
+# =========================================================================
+# Automatisering voor de meldingen van de MijnP2000-waakhond
+# =========================================================================
+# Gaat onderaan automations.yaml in
+# /srv/ssddata/mijnhuis/homeassistant/config/automations.yaml
+#
+# Home Assistant leest het bestand opnieuw via
+# Ontwikkelhulpmiddelen, YAML, Automatiseringen herladen.
+#
+# Voorwaarde: de MQTT-integratie is gekoppeld aan de broker op
+# 192.168.2.38:1883. Dat is al zo voor de neerslagmelding van mijnradar.
+#
+# Het bericht van de waakhond bevat een kant-en-klare "titel" en "tekst",
+# dus deze automatisering hoeft niets uit te rekenen. De overige velden
+# (soort, stil_minuten, herstart, herstarts_in_venster, container) zitten er
+# ook in, voor als de melding later uitgebreider moet worden.
+#
+# Het afknijpen van herhaalde meldingen gebeurt in de waakhond zelf
+# (MELDING_WACHT_UUR), niet hier.
+# =========================================================================
+
+- id: mijnp2000_waakhond_melding
+  alias: "MijnP2000: waakhond meldt iets"
+  description: >-
+    Stuurt een telefoonmelding zodra de waakhond merkt dat de verwerking van
+    P2000-meldingen stilligt, dat de ontvanger opnieuw is gestart, of dat de
+    verwerking weer loopt.
+  mode: queued
+  max: 5
+  triggers:
+    - trigger: mqtt
+      topic: p2000/waakhond
+  actions:
+    - action: notify.mobile_app_s24_pk
+      data:
+        title: "{{ trigger.payload_json.titel }}"
+        message: "{{ trigger.payload_json.tekst }}"
+        data:
+          url: "{{ trigger.payload_json.url }}"
+          # Zelfde tag, zodat een nieuwe melding de vorige op de telefoon
+          # vervangt in plaats van de lijst vol te zetten.
+          tag: mijnp2000-waakhond
+          channel: P2000
+          notification_icon: >-
+            {% if trigger.payload_json.soort == 'in_orde' %}
+              mdi:check-circle
+            {% else %}
+              mdi:radio-tower
+            {% endif %}

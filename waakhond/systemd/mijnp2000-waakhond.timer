@@ -1,0 +1,13 @@
+[Unit]
+Description=Elk kwartier controleren of MijnP2000 nog meldingen verwerkt
+
+[Timer]
+OnCalendar=*:00/15
+AccuracySec=30s
+# Een korte spreiding, zodat de controle niet elk kwartier op precies
+# hetzelfde moment samenvalt met andere timers op de server.
+RandomizedDelaySec=60
+Persistent=false
+
+[Install]
+WantedBy=timers.target
