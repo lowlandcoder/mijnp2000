@@ -76,6 +76,9 @@ Het bericht gaat zonder retain de deur uit. Met een bewaard bericht zou Home
 Assistant bij elke herstart de laatste melding opnieuw binnenkrijgen en
 opnieuw de telefoon laten trillen.
 
+De repository staat op server023 in `~/mijnp2000-repo`, volgens het patroon
+`~/<site>-repo` van `publiceer.sh`. Niet in `~/mijnp2000`.
+
 ## Inrichting op de lab023-server (eenmalig)
 
 1. Python-koppeling voor MQTT installeren:
@@ -85,12 +88,12 @@ opnieuw de telefoon laten trillen.
 2. Het script plaatsen:
 
        sudo mkdir -p /opt/mijnp2000-waakhond
-       sudo cp ~/mijnp2000/waakhond/waakhond.py /opt/mijnp2000-waakhond/
+       sudo cp ~/mijnp2000-repo/waakhond/waakhond.py /opt/mijnp2000-waakhond/
 
 3. De instellingen plaatsen en invullen:
 
        sudo mkdir -p /etc/mijnp2000
-       sudo cp ~/mijnp2000/waakhond/waakhond.env.voorbeeld /etc/mijnp2000/waakhond.env
+       sudo cp ~/mijnp2000-repo/waakhond/waakhond.env.voorbeeld /etc/mijnp2000/waakhond.env
        sudo chmod 600 /etc/mijnp2000/waakhond.env
        sudo nano /etc/mijnp2000/waakhond.env
 
@@ -103,7 +106,7 @@ opnieuw de telefoon laten trillen.
 
 5. De timer aanzetten:
 
-       sudo cp ~/mijnp2000/waakhond/systemd/mijnp2000-waakhond.* /etc/systemd/system/
+       sudo cp ~/mijnp2000-repo/waakhond/systemd/mijnp2000-waakhond.* /etc/systemd/system/
        sudo systemctl daemon-reload
        sudo systemctl enable --now mijnp2000-waakhond.timer
 
@@ -111,6 +114,35 @@ opnieuw de telefoon laten trillen.
    `journalctl -u mijnp2000-waakhond.service -n 30`.
 
 6. Werkt alles, dan `ALLEEN_MELDEN=0` zetten en de timer opnieuw laten lopen.
+
+## Bijwerken na een wijziging
+
+De waakhond hoort niet bij de gepubliceerde pagina, dus `publiceer.sh` doet
+hier niets. Bijwerken gaat met de hand, in deze volgorde:
+
+1. Eerst de instellingen, want elke ronde leest het env-bestand opnieuw:
+
+       sudo nano /etc/mijnp2000/waakhond.env
+
+2. Daarna het script en de timer:
+
+       cd ~/mijnp2000-repo && git pull
+       sudo cp ~/mijnp2000-repo/waakhond/waakhond.py /opt/mijnp2000-waakhond/
+       sudo cp ~/mijnp2000-repo/waakhond/systemd/mijnp2000-waakhond.* \
+         /etc/systemd/system/
+       sudo systemctl daemon-reload
+       sudo systemctl restart mijnp2000-waakhond.timer
+
+3. Controleren dat de nieuwe timer geldt:
+
+       systemctl list-timers mijnp2000-waakhond.timer
+
+   De eerstvolgende ronde hoort binnen vijf minuten te liggen. Ligt hij een
+   kwartier verderop, dan draait de oude timer nog en is `daemon-reload`
+   overgeslagen of het kopiëren mislukt.
+
+Meldt `git pull` "Already up to date", dan staat de wijziging nog niet op
+GitHub en heeft de rest geen zin.
 
 ## Beproeven
 
