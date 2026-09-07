@@ -78,13 +78,16 @@ In Portainer onder `environment` in te vullen:
 | `MQTT_TOPIC` | onderwerp om op te publiceren | `p2000/bericht` |
 | `MQTT_USER` | gebruikersnaam op de broker | `p2000` |
 | `MQTT_PASSWORD` | wachtwoord | *invullen* |
-| `RTL_CMD` | het rtl_fm-commando; hier met vaste gain 40 dB | zie `docker-compose.yml` |
+| `RTL_CMD` | het rtl_fm-commando; hier met vaste gain 30 dB | zie `docker-compose.yml` |
 | `STATUS_TOPIC` | onderwerp voor de hartslag; leeg zet de hartslag uit | `p2000/status` |
 | `STATUS_SECONDEN` | tijd tussen twee hartslagen | `60` |
 
-Een vaste gain van 40 dB blijkt op deze plek goed te werken; automatische gain
-gaf geen ontvangst. Bij een andere antenne of plek kan een andere waarde nodig
-zijn (probeer bijvoorbeeld 28 of 49.6).
+Sinds 07-09-2026 staat de gain vast op 30 dB. Daarvoor stond hij op 40 dB. Bij
+die waarde viel de stick regelmatig van de USB-bus met foutcode -71, wat past
+bij warmte en oversturing. Automatische gain gaf eerder helemaal geen
+ontvangst, dus een vaste waarde blijft nodig. Levert 30 dB merkbaar minder
+meldingen op, zet hem dan terug naar 40 of probeer 36. Bij een andere antenne
+of plek kan opnieuw een andere waarde nodig zijn.
 
 De broker draait als Mosquitto op de lab023-server (192.168.2.38), met poort
 1883 gepubliceerd en verplichte aanmelding. De ontvanger en de archiefpagina

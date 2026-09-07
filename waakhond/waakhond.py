@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Waakhond van MijnP2000: bewaakt of de verwerking nog loopt.
 
-Draait op server023 als oneshot-dienst, elk kwartier gestart door een
+Draait op server023 als oneshot-dienst, elke vijf minuten gestart door een
 systemd-timer. De ontvanger zelf draait op de sdr-server.
 
 Wat er bewaakt wordt
@@ -80,9 +80,9 @@ def instellingen() -> dict:
         "bedien_sleutel": os.environ.get("BEDIEN_SLEUTEL", ""),
         "experiment": os.environ.get("BEDIEN_EXPERIMENT", "p2000"),
         # Drempels en remmen
-        "stil_minuten": float(os.environ.get("STIL_DREMPEL_MINUTEN", "30")),
+        "stil_minuten": float(os.environ.get("STIL_DREMPEL_MINUTEN", "15")),
         "herstart_wacht_minuten": float(
-            os.environ.get("HERSTART_WACHT_MINUTEN", "5")),
+            os.environ.get("HERSTART_WACHT_MINUTEN", "10")),
         "herstart_max": int(os.environ.get("HERSTART_MAX", "3")),
         "herstart_venster_uur": float(
             os.environ.get("HERSTART_VENSTER_UUR", "6")),

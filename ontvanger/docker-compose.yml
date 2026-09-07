@@ -21,8 +21,10 @@ services:
       STATUS_SECONDEN: "60"
       # -d 00000002 kiest de stick op serienummer, niet op apparaatnummer.
       # Die stick draagt de naam "p2000" en is alleen voor deze ontvanger.
-      # Vaste gain 40 dB; werkt goed op deze plek.
-      RTL_CMD: "rtl_fm -d 00000002 -f 169.65M -M fm -s 22050 -l 0 -g 40"
+      # Vaste gain 30 dB (was 40 dB). Lager houdt de stick koeler en
+      # voorkomt oversturing; bij 40 dB viel de stick regelmatig van de
+      # USB-bus (foutcode -71).
+      RTL_CMD: "rtl_fm -d 00000002 -f 169.65M -M fm -s 22050 -l 0 -g 30"
     devices:
       # De hele usb-bus doorgeven, zodat beide sticks zichtbaar zijn. De keuze
       # welke stick gebruikt wordt, valt in RTL_CMD op serienummer en niet op

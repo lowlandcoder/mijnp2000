@@ -2,7 +2,7 @@
 
 Bewaakt of de P2000-verwerking nog loopt, herstart de ontvanger als dat niet
 zo is, en meldt dat via mail en via Home Assistant. Draait op de
-**lab023-server** (server023), elk kwartier gestart door een systemd-timer.
+**lab023-server** (server023), elke vijf minuten gestart door een systemd-timer.
 
 ## Waarom dit nodig is
 
@@ -48,11 +48,11 @@ herstartregel helpt dus niet.
 ## Remmen
 
 Een herstart repareert een vastgelopen stick of proces. Een slecht afgestemde
-antenne repareert hij niet. Zonder rem zou de waakhond dan elk kwartier
-opnieuw herstarten. Daarom:
+antenne repareert hij niet. Zonder rem zou de waakhond dan elke ronde opnieuw
+herstarten. Daarom:
 
-- controle elk kwartier, maar pas ingrijpen na 30 minuten stilte;
-- na een herstart 5 minuten rust, zodat de ontvanger op gang kan komen;
+- controle elke vijf minuten, maar pas ingrijpen na 15 minuten stilte;
+- na een herstart 10 minuten rust, zodat de ontvanger op gang kan komen;
 - hoogstens 3 herstarts per 6 uur, daarna alleen nog een melding met de tekst
   dat herstarten niet helpt;
 - hetzelfde probleem wordt hoogstens eens per 6 uur opnieuw gemeld;
@@ -147,6 +147,7 @@ Meekijken op de hartslag zelf:
 - Rolt de ontvanger nog de oude versie zonder hartslag uit, dan ziet de
   waakhond `geen_hartslag` en gaat hij herstarten. Eerst de ontvanger
   bijwerken, daarna pas de timer aanzetten.
-- Wordt de drempel `STIL_DREMPEL_MINUTEN` korter gezet dan het kwartier
+- Wordt de drempel `STIL_DREMPEL_MINUTEN` korter gezet dan de vijf minuten
   tussen twee controles, dan kan er worden herstart terwijl de ontvanger nog
-  aan het opstarten is.
+  aan het opstarten is. Houd daar ruime marge tussen; 15 minuten drempel bij
+  een ronde van vijf minuten werkt goed.

@@ -1,12 +1,13 @@
 [Unit]
-Description=Elk kwartier controleren of MijnP2000 nog meldingen verwerkt
+Description=Elke vijf minuten controleren of MijnP2000 nog meldingen verwerkt
 
 [Timer]
-OnCalendar=*:00/15
+OnCalendar=*:00/5
 AccuracySec=30s
-# Een korte spreiding, zodat de controle niet elk kwartier op precies
-# hetzelfde moment samenvalt met andere timers op de server.
-RandomizedDelaySec=60
+# Een korte spreiding, zodat de controle niet elke ronde op precies hetzelfde
+# moment samenvalt met andere timers op de server. Kort houden, want de ronde
+# loopt nu elke vijf minuten.
+RandomizedDelaySec=20
 Persistent=false
 
 [Install]
