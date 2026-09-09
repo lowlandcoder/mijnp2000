@@ -294,6 +294,8 @@ body {
   text-decoration: none;
 }
 .pin:hover { background: #434343; color: #cfcfcf; }
+/* Geen locatie herkend: de pin blijft dof en zonder koppeling. */
+.pin.geen, .pin.geen:hover { background: #363636; color: #4a4a4a; cursor: default; }
 .pin svg { width: 21px; height: 21px; fill: currentColor; }
 
 .leeg {

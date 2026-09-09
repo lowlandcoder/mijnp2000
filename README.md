@@ -62,6 +62,9 @@ melding, want een herstart repareert geen slecht afgestemde antenne.
 - [x] Waakhond aangescherpt: een ronde per vijf minuten en ingrijpen na 15
       minuten stilte, en de gain van de ontvanger van 40 naar 30 dB, omdat de
       stick tweemaal op een avond van de USB-bus viel (07-09-2026).
+- [x] Adresherkenning voor de kaartpin: straat, huisnummer, postcode en plaats
+      uit de meldingtekst, zonder capcodes, rit- en eenheidsnummers
+      (09-09-2026).
 - [ ] Home Assistant als afnemer van de meldingen zelf, met filters per regio
       en seintjes naar de telefoon.
 

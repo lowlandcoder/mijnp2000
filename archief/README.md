@@ -41,7 +41,8 @@ API en toont ze, nieuwste bovenaan. Mogelijkheden op de pagina:
   `static/script.js` in de lijst `STANDAARD_REGIOS`;
 - een kleur per dienst (brandweer rood, ambulance geel, politie blauw,
   lifeliner paars), in de titel van de melding en in de balk links;
-- een kaartpin rechts in elke melding die de locatie in Google Maps opent;
+- een kaartpin rechts in elke melding die de herkende locatie in Google Maps
+  opent; zie "Locatie voor de kaartpin";
 - een knop naar de landelijke live-kaart van p2000.page;
 - de vertaling per capcode (eenheid, dienst en regio) en een cursieve regel met
   de eenheid en de standplaats. Dit blok staat sinds 23-08-2026 standaard
@@ -68,7 +69,8 @@ opzet nauwelijks informatie op het scherm. De keuzes:
 - daaronder de capcodes, elk op een eigen regel in grijs, standaard ingeklapt en
   uit te klappen met een tik op de melding;
 - een grijze pinkolom rechts over de volle hoogte van de melding, die de locatie
-  in Google Maps opent;
+  in Google Maps opent. Is er geen locatie herkend, dan is de pin dof en niet
+  aan te klikken;
 - een vaste balk bovenin met een lopende klok, en knoppen voor de startpagina,
   het geluid, de filters, de landelijke kaart, zoeken en schermvullend;
 - de filters (regio, periode, zoeken, verversen) zitten achter de oranje
@@ -78,6 +80,45 @@ Omdat `huisstijl.css` niet meer wordt ingeladen, heeft een wijziging in de
 gedeelde huisstijl geen gevolgen voor deze pagina. Het bestand blijft wel in
 `static/` staan, zodat `verspreid-huisstijl.ps1` zonder foutmelding blijft
 werken.
+
+## Locatie voor de kaartpin
+
+Tot 09-09-2026 ging bijna de hele meldingtekst mee als zoekopdracht naar Google
+Maps. Objectnamen, eenheids- en ritnummers en plaatsafkortingen kwamen zo in de
+zoekopdracht terecht en zetten de pin regelmatig op een verkeerde plek.
+
+Sinds 09-09-2026 haalt `leesAdres` in `static/script.js` gericht de locatie uit
+de tekst, in deze volgorde:
+
+1. **Postcode als ankerpunt.** Staat er een postcode in (`2011 AB`, ook zonder
+   spatie geschreven), dan staat het adres ervoor en de plaats erachter.
+2. **Straatuitgang.** Anders wordt gezocht naar een woord met een Nederlandse
+   straatuitgang (`-straat`, `-laan`, `-weg`, `-plein`, `-hof` en verder).
+   Uitgangen die ook in plaatsnamen voorkomen (`-dam`, `-burg`, `-poort`)
+   tellen alleen mee als er een huisnummer achter staat.
+3. **Laatste twee naamwoorden.** Heeft de melding een prioriteit (`A1`, `P 1`)
+   maar geen straatuitgang, dan zijn de laatste twee naamwoorden vrijwel altijd
+   de locatie en de plaats, zoals in "Vuursteen Heemskerk".
+4. **Snelweg.** Anders telt een weg als `A9` of `N205` als locatie.
+5. **Standplaats van de capcode** als de tekst geen plaats geeft.
+
+Het huisnummer wordt apart herkend, ook met een letter of een reeks (`4a`,
+`12-14`). Een getal van vier cijfers met een plaatsnaam erachter is geen
+huisnummer maar de cijfers van de postcode: in "Paleisstraat 1012 Amsterdam"
+wordt `1012` dus als postcode meegegeven en niet als huisnummer.
+
+Weggelaten worden: prioriteit, capcodes, rit- en eenheidsnummers (`13106`,
+`12-162`, `BDH-01`, `SGH 88`), objectcodes van zes cijfers, tekst tussen
+haakjes zoals `(dia: ja)`, plaatsafkortingen in hoofdletters (`HELLVS`,
+`ROTTDM`) en woorden als "Rit", "bon" en "VWS".
+
+De herkende locatie staat in de zweeftekst van de pin, zodat te zien is wat er
+naar de kaart gaat. Wordt er niets herkend en geeft ook de capcode geen plaats,
+dan blijft de pin dof en zonder koppeling.
+
+De regels staan in `static/script.js` en zijn zonder server te beproeven:
+
+    node --check static/script.js
 
 ## Capcode-database: nodig voor het regiofilter
 
