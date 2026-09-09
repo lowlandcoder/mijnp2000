@@ -65,6 +65,9 @@ melding, want een herstart repareert geen slecht afgestemde antenne.
 - [x] Adresherkenning voor de kaartpin: straat, huisnummer, postcode en plaats
       uit de meldingtekst, zonder capcodes, rit- en eenheidsnummers
       (09-09-2026).
+- [x] Publiceren met `~/publiceer.sh mijnp2000` werkt weer, doordat
+      `.publiceer-compose` naar `archief/` wijst; `robots.txt` en het weren van
+      scanverkeer toegevoegd aan de nginx-instelling (09-09-2026).
 - [ ] Home Assistant als afnemer van de meldingen zelf, met filters per regio
       en seintjes naar de telefoon.
 

@@ -169,6 +169,38 @@ In `docker-compose.yml` onder `environment`:
 | `MQTT_PASSWORD` | wachtwoord (via `.env`) | *invullen* |
 | `RETENTIE_DAGEN` | bewaartermijn in dagen | `7` |
 
+## Publiceren
+
+Deze site heeft geen docroot: de pagina zit in de container en nginx stuurt
+door naar `127.0.0.1:8200`. Publiceren betekent dus: de container opnieuw
+bouwen. Sinds 09-09-2026 doet het generieke script dat zelf, omdat
+`.publiceer-compose` in de wortel van de repo naar `archief` wijst:
+
+    ~/publiceer.sh mijnp2000
+
+Daarvoor liep dat vast op de melding dat `/var/www/mijnp2000` niet bestaat,
+want het script zocht het compose-bestand alleen in de wortel van de repo. Met
+de hand kan het ook:
+
+    cd ~/mijnp2000-repo/archief
+    sudo docker compose up -d --build
+
+Bouwen vanuit `archief/` is nodig, want daar staat `.env` met het
+MQTT-wachtwoord. De pagina zit in het image, dus zonder opnieuw bouwen blijft
+de oude versie draaien.
+
+## robots.txt
+
+De pagina hoort niet in zoekmachines. Omdat er geen docroot is, komt
+`robots.txt` uit de gedeelde map `/var/www/robots/` op de server. Het blok
+staat in `nginx-mijnp2000.conf` en moet in het 443-blok terechtkomen, met
+`auth_request off;` zodat het bestand zonder aanmelden te lezen is.
+Controleren:
+
+    curl -s -o /dev/null -w "%{http_code}\n" https://mijnp2000.lab023.nl/robots.txt
+
+Bij `200` is het goed; bij `302` gaat het verzoek nog langs de aanmelding.
+
 ## Inrichting op de lab023-server
 
 1. Repository klonen (of bijwerken) op de lab023-server.
@@ -195,8 +227,9 @@ In `docker-compose.yml` onder `environment`:
 
        sudo certbot --nginx -d mijnp2000.lab023.nl
 
-   Controleer daarna dat `include snippets/lab023-login.conf;` in het 443-blok
-   staat.
+   Controleer daarna dat `include snippets/lab023-login.conf;`,
+   `include snippets/lab023-blokkeer.conf;` en het blok voor `/robots.txt` in
+   het 443-blok staan.
 8. Op `mijnsdr.lab023.nl` de kaart MijnP2000 activeren: in `script.js` de
    `actief: false` weghalen en het domein invullen.
 
