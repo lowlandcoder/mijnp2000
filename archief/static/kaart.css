@@ -46,6 +46,27 @@ body.kaartpagina {
   color: var(--oranje);
 }
 
+/* ---------- Middelpunt ---------- */
+.middelpuntrij {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.middelpuntrij input {
+  width: 110px;
+  text-transform: uppercase;
+}
+
+.middelpuntrij .tekstknop {
+  padding: 0;
+}
+
+.paneel-uitleg.fout {
+  color: var(--oranje);
+}
+
 /* ---------- Kaart en kolom naast elkaar ---------- */
 .kaartrij {
   flex: 1;

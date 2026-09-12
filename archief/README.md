@@ -134,10 +134,33 @@ licht de melding in de kolom op en schuift die in beeld. De kleur van de pin is
 de kleur van de dienst, gelijk aan de lijstpagina. De pagina verlevendigt elke 30
 seconden en laat het beeld daarbij staan, zodat inzoomen niet verloren gaat.
 
-De straal staat standaard op 12 km en is op de pagina bij te stellen van 2 tot 50
-km, achter de knop naast de klok. Die keuze wordt per apparaat bewaard. De
-opzet van de kaart (Leaflet met de tegels van CARTO) is overgenomen van mijnais
-en mijnradar; de opmaak volgt de donkere weergave van deze site.
+Achter de knop naast de klok staan twee instellingen, allebei bewaard per
+apparaat:
+
+- **Middelpunt.** Een eigen postcode, bijvoorbeeld `2011 AB`. De postcode wordt
+  opgezocht bij PDOK en de kaart springt naar dat punt. Met de knop Standaard
+  komt het middelpunt uit het env-bestand op de server terug. Wordt de postcode
+  niet gevonden, dan blijft het oude middelpunt staan en meldt de pagina dat.
+  Staat er in het env-bestand geen middelpunt, dan is de pagina toch te
+  gebruiken: een ingevulde postcode maakt de kaart alsnog.
+- **Straal.** Standaard 12 km, bij te stellen van 2 tot 50 km.
+
+De opzet van de kaart (Leaflet met de tegels van CARTO) is overgenomen van
+mijnais en mijnradar; de opmaak volgt de donkere weergave van deze site.
+
+### Nieuwe meldingen en het beeld van de kaart
+
+Komt er een melding binnen die in het gebied valt, dan wordt die vanzelf de
+gekozen melding: het kaartje in de kolom en de pin op de kaart lichten samen op
+en de kolom schuift naar dat kaartje. Een eigen keuze wordt daarmee
+overschreven; dat is met opzet, want de nieuwste melding is meestal de reden om
+te kijken. Bij de eerste ronde en na het wijzigen van de straal of het
+middelpunt gebeurt dat niet, want dan is alles nieuw.
+
+Het beeld van de kaart blijft staan: bij een nieuwe melding, bij een tik op een
+kaartje en bij een tik op een pin. Alleen een nieuw middelpunt verzet het beeld,
+want dat is een eigen keuze. Inzoomen op een straat blijft dus behouden, ook als
+de pin van de nieuwe melding buiten beeld valt.
 
 ### Van adres naar coordinaten
 

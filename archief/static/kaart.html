@@ -42,6 +42,20 @@
   <!-- Paneel met de straal, klapt open onder de balk -->
   <section class="paneel" id="paneel" hidden>
     <div class="paneel-vak">
+      <span class="paneel-kop">Middelpunt</span>
+      <div class="middelpuntrij">
+        <input id="postcode" type="text" maxlength="8" placeholder="2011 AB"
+               autocomplete="postal-code" aria-label="Postcode van het middelpunt">
+        <button type="button" class="tekstknop" id="postcodeToepassen">Toepassen</button>
+        <button type="button" class="tekstknop" id="postcodeStandaard">Standaard</button>
+      </div>
+      <p class="paneel-uitleg" id="middelpuntUitleg">
+        Een eigen postcode wordt op dit apparaat bewaard. Met Standaard komt het
+        middelpunt uit het env-bestand op de server terug.
+      </p>
+    </div>
+
+    <div class="paneel-vak">
       <span class="paneel-kop">Straal rond het middelpunt</span>
       <div class="straalrij">
         <input type="range" id="straal" min="2" max="50" step="1" value="12"

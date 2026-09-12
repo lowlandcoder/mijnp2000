@@ -26,6 +26,7 @@ const MARGE_KM = 15;           // ruimte rond het gebied voor de voorselectie
 const MAX_MELDINGEN = 500;     // hoogstens zoveel meldingen per ronde ophalen
 const TERMEN_PER_VERZOEK = 50; // zoektermen per verzoek aan de backend
 const STRAAL_SLEUTEL = "mijnp2000.straal";
+const POSTCODE_SLEUTEL = "mijnp2000.postcode";
 
 /* Kaartondergrond, gelijk aan mijnradar en mijnais. De lichte laag leest het
    best; kaart.css dimt de tegels zodat ze bij de donkere pagina passen. CARTO
@@ -40,9 +41,12 @@ let tegellaag = null;
 let gebiedCirkel = null;
 let pinLaag = null;
 
-let middelpunt = null;
+let middelpunt = null;          // het punt waar de kaart omheen kijkt
+let standaardMiddelpunt = null; // uit het env-bestand op de server
+let middelpuntStip = null;
 let straalKm = 12;
 let minuten = 60;
+let kaartSleutel = "";
 
 let ruweMeldingen = [];
 let inGebied = [];
@@ -51,7 +55,9 @@ let pinPer = new Map();     // sleutel -> pin op de kaart
 let actief = null;          // sleutel van de gekozen melding
 let beeldGezet = false;     // na de eerste keer het beeld niet meer verschuiven
 let bezig = false;
-const locaties = new Map(); // zoekterm -> {lat, lon} of null
+const locaties = new Map();      // zoekterm -> {lat, lon} of null
+let bekendeSleutels = new Set(); // wat er de vorige ronde in het gebied stond
+let eersteRonde = true;          // bij het opbouwen niets als nieuw aanmerken
 
 /* ---------- Klok en stand ---------- */
 function zetKlok() {
@@ -175,10 +181,36 @@ function maakKaart() {
     maxZoom: 19,
   }).addTo(kaart);
   pinLaag = L.layerGroup().addTo(kaart);
-  L.circleMarker([middelpunt.lat, middelpunt.lon], {
+  tekenMiddelpunt();
+  tekenGebied();
+}
+
+function tekenMiddelpunt() {
+  if (middelpuntStip) middelpuntStip.remove();
+  middelpuntStip = L.circleMarker([middelpunt.lat, middelpunt.lon], {
     radius: 4, color: "#ffffff", weight: 1, fillColor: "#f0883e", fillOpacity: 1,
   }).addTo(kaart).bindTooltip("Middelpunt");
+}
+
+/* Een ander middelpunt is een keuze van de gebruiker zelf, dus dan mag het
+   beeld wel mee verspringen. Bij nieuwe meldingen blijft het beeld staan. */
+function verplaatsMiddelpunt() {
+  tekenMiddelpunt();
+  beeldGezet = false;
   tekenGebied();
+}
+
+/* Stond er bij het opstarten geen middelpunt, dan is de kaart nog niet gemaakt.
+   Een ingevulde postcode maakt hem dan alsnog. */
+function zorgVoorKaart() {
+  if (kaart) {
+    verplaatsMiddelpunt();
+    return;
+  }
+  maakKaart();
+  zetKaartSleutel(kaartSleutel);
+  $("kaartfout").hidden = true;
+  ronde();
 }
 
 function zetKaartSleutel(sleutel) {
@@ -288,22 +320,41 @@ function kies(sleutel, vanwaar) {
   zetPinnen();
   zetKolom();
   if (!actief) return;
-  const kaartje = document.querySelector('.kolomkaart[data-sleutel="' + CSS.escape(actief) + '"]');
-  const pin = pinPer.get(actief);
-  if (vanwaar === "kolom" && pin) {
-    kaart.panTo(pin.getLatLng());
-  }
-  if (vanwaar === "kaart" && kaartje) {
-    kaartje.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }
+  /* Het beeld van de kaart blijft staan, ook bij een tik op een pin. Alleen de
+     kolom schuift, zodat de gekozen melding zichtbaar is. */
+  if (vanwaar !== "kolom") schuifNaarKaartje(actief);
+}
+
+function schuifNaarKaartje(sleutel) {
+  const kaartje = document.querySelector('.kolomkaart[data-sleutel="' + CSS.escape(sleutel) + '"]');
+  if (kaartje) kaartje.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
 function toon() {
+  const huidige = new Set(inGebied.map((rij) => sleutelVan(rij.m)));
+
+  /* De nieuwste melding die er de vorige ronde nog niet was, wordt de gekozen
+     melding: het kaartje in de kolom en de pin op de kaart lichten samen op. Bij
+     de eerste ronde en na een eigen wijziging van straal of middelpunt gebeurt
+     dat niet, want dan is alles nieuw. */
+  let nieuwste = null;
+  if (!eersteRonde) {
+    for (const rij of inGebied) {          // de lijst staat op nieuwste eerst
+      const sleutel = sleutelVan(rij.m);
+      if (!bekendeSleutels.has(sleutel)) { nieuwste = sleutel; break; }
+    }
+  }
+  bekendeSleutels = huidige;
+  eersteRonde = false;
+
+  if (nieuwste) actief = nieuwste;
   // Een melding die uit het venster is gelopen, is ook geen keuze meer.
-  if (actief && !inGebied.some((rij) => sleutelVan(rij.m) === actief)) actief = null;
+  else if (actief && !huidige.has(actief)) actief = null;
+
   zetPinnen();
   zetKolom();
   zetStand();
+  if (nieuwste) schuifNaarKaartje(nieuwste);
 }
 
 /* ---------- Ronde: meldingen ophalen, indelen en tonen ---------- */
@@ -332,6 +383,7 @@ async function opnieuwIndelen() {
   bezig = true;
   try {
     await bepaalGebied();
+    eersteRonde = true;   // een eigen wijziging levert geen nieuwe meldingen op
     toon();
   } finally {
     bezig = false;
@@ -354,6 +406,70 @@ function bewaarStraal(waarde) {
   try {
     localStorage.setItem(STRAAL_SLEUTEL, String(waarde));
   } catch (e) { /* opslag niet beschikbaar */ }
+}
+
+/* ---------- Middelpunt kiezen met een postcode ---------- */
+function leesBewaardePostcode() {
+  try {
+    return localStorage.getItem(POSTCODE_SLEUTEL) || "";
+  } catch (e) {
+    return "";
+  }
+}
+
+function bewaarPostcode(postcode) {
+  try {
+    if (postcode) localStorage.setItem(POSTCODE_SLEUTEL, postcode);
+    else localStorage.removeItem(POSTCODE_SLEUTEL);
+  } catch (e) { /* opslag niet beschikbaar */ }
+}
+
+/* Vier cijfers en twee letters, met of zonder spatie ertussen. */
+function nettePostcode(tekst) {
+  const schoon = (tekst || "").trim().toUpperCase().replace(/\s+/g, "");
+  return /^\d{4}[A-Z]{2}$/.test(schoon) ? schoon.slice(0, 4) + " " + schoon.slice(4) : "";
+}
+
+function meldMiddelpunt(tekst, isFout) {
+  const regel = $("middelpuntUitleg");
+  regel.textContent = tekst;
+  regel.classList.toggle("fout", !!isFout);
+}
+
+async function zetPostcode(tekst) {
+  const postcode = nettePostcode(tekst);
+  if (!postcode) {
+    meldMiddelpunt("Vul een postcode in, bijvoorbeeld 2011 AB.", true);
+    return;
+  }
+  meldMiddelpunt("Bezig met opzoeken: " + postcode + ".");
+  await vraagLocaties([postcode], "postcode");
+  const punt = locaties.get(postcode) || null;
+  if (!punt) {
+    meldMiddelpunt("Postcode " + postcode + " is niet gevonden. Het middelpunt blijft staan.", true);
+    return;
+  }
+  middelpunt = punt;
+  bewaarPostcode(postcode);
+  $("postcode").value = postcode;
+  meldMiddelpunt("Middelpunt: " + postcode + ". Met Standaard komt het middelpunt " +
+                 "uit het env-bestand terug.");
+  zorgVoorKaart();
+  opnieuwIndelen();
+}
+
+function herstelMiddelpunt() {
+  bewaarPostcode("");
+  $("postcode").value = "";
+  if (!standaardMiddelpunt) {
+    meldMiddelpunt("Er staat geen middelpunt in het env-bestand op de server. " +
+                   "Vul hierboven een postcode in.", true);
+    return;
+  }
+  middelpunt = standaardMiddelpunt;
+  meldMiddelpunt("Middelpunt uit het env-bestand op de server.");
+  zorgVoorKaart();
+  opnieuwIndelen();
 }
 
 /* ---------- Knoppen ---------- */
@@ -384,6 +500,12 @@ function zetKnoppen() {
     opnieuwIndelen();
   });
 
+  $("postcodeToepassen").addEventListener("click", () => zetPostcode($("postcode").value));
+  $("postcode").addEventListener("keydown", (gebeurtenis) => {
+    if (gebeurtenis.key === "Enter") zetPostcode($("postcode").value);
+  });
+  $("postcodeStandaard").addEventListener("click", herstelMiddelpunt);
+
   $("kolomlijst").addEventListener("click", (gebeurtenis) => {
     const kaartje = gebeurtenis.target.closest(".kolomkaart");
     if (kaartje) kies(kaartje.dataset.sleutel, "kolom");
@@ -407,6 +529,7 @@ async function start() {
   }
 
   minuten = instellingen.minuten || 60;
+  kaartSleutel = (instellingen.basiskaart || {}).sleutel || "";
   const bewaard = leesBewaardeStraal();
   straalKm = bewaard !== null ? bewaard : (instellingen.straal_km || 12);
   $("straal").value = straalKm;
@@ -417,15 +540,38 @@ async function start() {
   $("kolomLeeg").textContent =
     "Geen meldingen in dit gebied in de afgelopen " + minuten + " minuten.";
 
-  middelpunt = instellingen.middelpunt || null;
+  standaardMiddelpunt = instellingen.middelpunt || null;
+  middelpunt = standaardMiddelpunt;
+
+  // Een zelf gekozen postcode gaat voor op het middelpunt uit het env-bestand.
+  const bewaardePostcode = leesBewaardePostcode();
+  if (bewaardePostcode) {
+    $("postcode").value = bewaardePostcode;
+    await vraagLocaties([bewaardePostcode], "postcode");
+    const punt = locaties.get(bewaardePostcode) || null;
+    if (punt) {
+      middelpunt = punt;
+      meldMiddelpunt("Middelpunt: " + bewaardePostcode + ". Met Standaard komt het " +
+                     "middelpunt uit het env-bestand terug.");
+    } else {
+      meldMiddelpunt("De bewaarde postcode " + bewaardePostcode + " is niet gevonden. " +
+                     "Het middelpunt komt nu uit het env-bestand.", true);
+    }
+  } else {
+    meldMiddelpunt("Middelpunt uit het env-bestand op de server. Een eigen postcode " +
+                   "wordt op dit apparaat bewaard.");
+  }
+
   if (!middelpunt) {
-    toonFout("Het middelpunt ontbreekt. Zet KAART_POSTCODE, of KAART_LAT en " +
-             "KAART_LON, in het env-bestand op de server en start de container opnieuw.");
+    toonFout("Het middelpunt ontbreekt. Vul hierboven een postcode in, of zet " +
+             "KAART_POSTCODE, of KAART_LAT en KAART_LON, in het env-bestand op de " +
+             "server en start de container opnieuw.");
+    $("paneel").hidden = false;
     return;
   }
 
   maakKaart();
-  zetKaartSleutel((instellingen.basiskaart || {}).sleutel);
+  zetKaartSleutel(kaartSleutel);
   ronde();
   setInterval(ronde, VERVERS_MS);
 }
