@@ -26,6 +26,10 @@ const MARGE_KM = 15;           // ruimte rond het gebied voor de voorselectie
 const MAX_MELDINGEN = 500;     // hoogstens zoveel meldingen per ronde ophalen
 const TERMEN_PER_VERZOEK = 50; // zoektermen per verzoek aan de backend
 const STRAAL_SLEUTEL = "mijnp2000.straal";
+/* Hoe ver de kaart bij het aanpassen van de straal hoogstens inzoomt. Zoomstand
+   16 komt op een gewoon scherm neer op straatniveau met ongeveer 500 meter om
+   het middelpunt heen. Verder inzoomen blijft met de hand mogelijk. */
+const MAX_INZOOM = 16;
 const POSTCODE_SLEUTEL = "mijnp2000.postcode";
 
 /* Kaartondergrond, gelijk aan mijnradar en mijnais. De lichte laag leest het
@@ -196,8 +200,7 @@ function tekenMiddelpunt() {
    beeld wel mee verspringen. Bij nieuwe meldingen blijft het beeld staan. */
 function verplaatsMiddelpunt() {
   tekenMiddelpunt();
-  beeldGezet = false;
-  tekenGebied();
+  tekenGebied(true);
 }
 
 /* Stond er bij het opstarten geen middelpunt, dan is de kaart nog niet gemaakt.
@@ -218,14 +221,18 @@ function zetKaartSleutel(sleutel) {
   tegellaag.setUrl(KAARTLAAG + "?key=" + encodeURIComponent(sleutel));
 }
 
-function tekenGebied() {
+/* Tekent de cirkel van het gebied. Met pasBeeldAan gaat de kaart zo ver mogelijk
+   inzoomen op die cirkel, tot hoogstens MAX_INZOOM. Dat gebeurt bij het
+   opbouwen van de pagina en bij een eigen wijziging van de straal of het
+   middelpunt, en nooit bij het verversen van de meldingen. */
+function tekenGebied(pasBeeldAan) {
   if (gebiedCirkel) gebiedCirkel.remove();
   gebiedCirkel = L.circle([middelpunt.lat, middelpunt.lon], {
     radius: straalKm * 1000,
     color: "#f0883e", weight: 1, dashArray: "4 4", fill: false,
   }).addTo(kaart);
-  if (!beeldGezet) {
-    kaart.fitBounds(gebiedCirkel.getBounds(), { padding: [10, 10] });
+  if (pasBeeldAan || !beeldGezet) {
+    kaart.fitBounds(gebiedCirkel.getBounds(), { padding: [10, 10], maxZoom: MAX_INZOOM });
     beeldGezet = true;
   }
 }
@@ -496,7 +503,7 @@ function zetKnoppen() {
   regelaar.addEventListener("change", () => {
     straalKm = parseFloat(regelaar.value);
     bewaarStraal(straalKm);
-    tekenGebied();
+    tekenGebied(true);
     opnieuwIndelen();
   });
 

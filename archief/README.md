@@ -143,7 +143,10 @@ apparaat:
   niet gevonden, dan blijft het oude middelpunt staan en meldt de pagina dat.
   Staat er in het env-bestand geen middelpunt, dan is de pagina toch te
   gebruiken: een ingevulde postcode maakt de kaart alsnog.
-- **Straal.** Standaard 12 km, bij te stellen van 2 tot 50 km.
+- **Straal.** Standaard 12 km, bij te stellen van 2 tot 50 km. De kaart zoomt
+  daarbij zo ver mogelijk in op de cirkel, tot hoogstens zoomstand 16. Dat is
+  op een gewoon scherm straatniveau met ongeveer 500 meter om het middelpunt
+  heen; verder inzoomen blijft met de hand mogelijk.
 
 De opzet van de kaart (Leaflet met de tegels van CARTO) is overgenomen van
 mijnais en mijnradar; de opmaak volgt de donkere weergave van deze site.
@@ -158,8 +161,8 @@ te kijken. Bij de eerste ronde en na het wijzigen van de straal of het
 middelpunt gebeurt dat niet, want dan is alles nieuw.
 
 Het beeld van de kaart blijft staan: bij een nieuwe melding, bij een tik op een
-kaartje en bij een tik op een pin. Alleen een nieuw middelpunt verzet het beeld,
-want dat is een eigen keuze. Inzoomen op een straat blijft dus behouden, ook als
+kaartje en bij een tik op een pin. Alleen een eigen wijziging verzet het beeld,
+dus een ander middelpunt of een andere straal. Inzoomen op een straat blijft dus behouden, ook als
 de pin van de nieuwe melding buiten beeld valt.
 
 ### Van adres naar coordinaten
