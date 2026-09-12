@@ -12,7 +12,8 @@ ontvanger en meerdere afnemers, met MQTT als schakelpunt:
 - **Afnemer — archiefpagina** `mijnp2000.lab023.nl`: een kleine backend op de
   lab023-server leest MQTT, schrijft de meldingen in een SQLite-database,
   vertaalt capcodes naar regio, en toont ze met filter op regio en instelbare
-  geschiedenis tot zeven dagen. De opmaak volgt sinds 16-08-2026 de compacte
+  geschiedenis tot zeven dagen. Op `/kaart` staat daarnaast een eigen kaart met
+  de meldingen van het laatste uur binnen een instelbare straal. De opmaak volgt sinds 16-08-2026 de compacte
   weergave van p2000.page; sinds 23-08-2026 met kleinere letters en standaard
   ingeklapte capcodes, en met een samengevoegde capcode-lijst van ± 88.000
   codes. Zie `archief/README.md`.
@@ -68,6 +69,10 @@ melding, want een herstart repareert geen slecht afgestemde antenne.
 - [x] Publiceren met `~/publiceer.sh mijnp2000` werkt weer, doordat
       `.publiceer-compose` naar `archief/` wijst; `robots.txt` en het weren van
       scanverkeer toegevoegd aan de nginx-instelling (09-09-2026).
+- [x] Eigen kaartpagina op `/kaart`: meldingen van de afgelopen 60 minuten
+      binnen een instelbare straal, met een kolom ernaast en pins die in twee
+      richtingen met de kolom meelichten. Adressen worden omgezet met de PDOK
+      Locatieserver en bewaard in de eigen database (12-09-2026).
 - [ ] Home Assistant als afnemer van de meldingen zelf, met filters per regio
       en seintjes naar de telefoon.
 

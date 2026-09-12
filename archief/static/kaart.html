@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#212121">
+  <meta name="description" content="Meldingen van de hulpdiensten in de buurt, op een eigen kaart met een instelbare straal.">
+  <title>MijnP2000 kaart</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="kaart.css">
+</head>
+<body class="kaartpagina">
+
+  <!-- Balk bovenin: zelfde opzet als de lijstpagina -->
+  <header class="balk" id="balk">
+    <div class="knoppen knoppen-links">
+      <a class="knop" href="https://start.lab023.nl" title="Naar de startpagina" aria-label="Startpagina">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"></path><path d="M5 10v10h14V10"></path></svg>
+      </a>
+      <a class="knop" href="/" title="Terug naar de lijst met meldingen" aria-label="Lijst">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </a>
+      <button class="knop knop-filter" id="knopPaneel" title="Straal instellen" aria-label="Straal instellen" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 12l6-6"></path></svg>
+      </button>
+    </div>
+
+    <div class="titelblok">
+      <div class="klok" id="klok">--:--:--</div>
+      <div class="ondertitel">mijnp2000.lab023.nl/kaart <span class="live" id="live">live</span></div>
+    </div>
+
+    <div class="knoppen knoppen-rechts">
+      <button class="knop" id="knopSchermvullend" title="Schermvullend" aria-label="Schermvullend">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Paneel met de straal, klapt open onder de balk -->
+  <section class="paneel" id="paneel" hidden>
+    <div class="paneel-vak">
+      <span class="paneel-kop">Straal rond het middelpunt</span>
+      <div class="straalrij">
+        <input type="range" id="straal" min="2" max="50" step="1" value="12"
+               aria-label="Straal in kilometers">
+        <output class="straalwaarde" id="straalWaarde">12 km</output>
+      </div>
+      <p class="paneel-uitleg" id="paneelUitleg">
+        De kaart toont de meldingen van de afgelopen 60 minuten waarvan het adres
+        binnen deze straal valt. De keuze wordt op dit apparaat bewaard.
+      </p>
+    </div>
+  </section>
+
+  <p class="stand" id="stand"></p>
+
+  <div class="kaartrij">
+    <div class="kaartvak">
+      <div id="kaart" role="application" aria-label="Kaart met meldingen in de buurt"></div>
+      <p class="kaartfout" id="kaartfout" hidden></p>
+    </div>
+    <aside class="kolom" aria-label="Meldingen in dit gebied">
+      <div class="kolomlijst" id="kolomlijst"></div>
+      <p class="kolom-leeg" id="kolomLeeg" hidden>Geen meldingen in dit gebied in de afgelopen 60 minuten.</p>
+    </aside>
+  </div>
+
+  <script src="melding.js"></script>
+  <script src="kaart.js"></script>
+</body>
+</html>

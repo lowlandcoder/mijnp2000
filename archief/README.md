@@ -13,7 +13,10 @@ MQTT; deze backend is een van de afnemers.
 
 - `app.py` — de backend: leest MQTT mee, slaat op in SQLite, vertaalt capcodes
   naar regio, schoont oude meldingen op en biedt de pagina en een JSON-API.
-- `static/` — de pagina: `index.html`, `style.css`, `script.js`. Het bestand
+- `static/` — de pagina's: `index.html` met `style.css` en `script.js` voor de
+  lijst, en `kaart.html` met `kaart.css` en `kaart.js` voor de kaart. In
+  `melding.js` staan de functies die beide pagina's gebruiken: de kleur per
+  dienst, het aantal minuten geleden en de adresherkenning. Het bestand
   `huisstijl.css` staat er nog wel, maar wordt niet meer ingeladen; zie
   "Opmaak van de pagina".
 - `Dockerfile`, `requirements.txt`, `docker-compose.yml` — om de container te
@@ -43,7 +46,7 @@ API en toont ze, nieuwste bovenaan. Mogelijkheden op de pagina:
   lifeliner paars), in de titel van de melding en in de balk links;
 - een kaartpin rechts in elke melding die de herkende locatie in Google Maps
   opent; zie "Locatie voor de kaartpin";
-- een knop naar de landelijke live-kaart van p2000.page;
+- een knop naar de eigen kaartpagina `/kaart`; zie "Kaartpagina";
 - de vertaling per capcode (eenheid, dienst en regio) en een cursieve regel met
   de eenheid en de standplaats. Dit blok staat sinds 23-08-2026 standaard
   ingeklapt; een tik op de melding klapt het uit en weer in. Het aantal
@@ -120,6 +123,54 @@ De regels staan in `static/script.js` en zijn zonder server te beproeven:
 
     node --check static/script.js
 
+## Kaartpagina
+
+Op `/kaart` staat sinds 12-09-2026 een eigen kaart, in plaats van de knop naar de
+landelijke kaart van p2000.page. De pagina toont de meldingen van de afgelopen 60
+minuten binnen een straal rond een vast middelpunt: links de kaart met een pin
+per melding, rechts een kolom met dezelfde meldingen, nieuwste bovenaan. Een tik
+in de kolom licht de pin op en schuift de kaart ernaartoe; een tik op de pin
+licht de melding in de kolom op en schuift die in beeld. De kleur van de pin is
+de kleur van de dienst, gelijk aan de lijstpagina. De pagina verlevendigt elke 30
+seconden en laat het beeld daarbij staan, zodat inzoomen niet verloren gaat.
+
+De straal staat standaard op 12 km en is op de pagina bij te stellen van 2 tot 50
+km, achter de knop naast de klok. Die keuze wordt per apparaat bewaard. De
+opzet van de kaart (Leaflet met de tegels van CARTO) is overgenomen van mijnais
+en mijnradar; de opmaak volgt de donkere weergave van deze site.
+
+### Van adres naar coordinaten
+
+De meldingen zelf bevatten geen coordinaten. De pagina haalt straat, postcode en
+plaats uit de meldingtekst met `leesAdres` in `melding.js` en vraagt de
+coordinaten op bij de backend (`POST /api/locaties`). De backend zoekt elke
+zoekterm een keer op bij de PDOK Locatieserver en bewaart de uitkomst in de tabel
+`locaties` in dezelfde database. Ook een misser wordt bewaard, zodat dezelfde
+tekst niet elke ronde opnieuw wordt opgezocht.
+
+Twee dingen houden het opzoeken klein:
+
+- **Huisnummers gaan niet mee.** De pin komt daarmee in de goede straat, en er
+  gaat zo weinig mogelijk naar buiten. Meldingen kunnen persoonsgegevens
+  bevatten, dus dat weegt hier zwaarder dan een pin op de meter.
+- **Eerst de plaats, dan de straat.** De pagina zoekt eerst de plaatsnaam op, een
+  korte lijst die na een dag vrijwel altijd uit de database komt. Alleen voor
+  plaatsen binnen de straal plus 15 km wordt daarna de straat opgezocht. Zo
+  gaan meldingen uit de rest van het land niet naar PDOK.
+
+Per verzoek zoekt de backend hoogstens 25 nieuwe termen op (`PDOK_PER_VERZOEK`).
+Wat niet meer paste, volgt bij de volgende ronde van de pagina. Een melding
+waarvan het adres niet te bepalen is, staat wel in de kolom maar niet op de
+kaart; onder de balk staat hoeveel dat er zijn.
+
+De PDOK Locatieserver is gratis en vraagt geen sleutel. Beproeven kan van de
+server af:
+
+    curl -s "https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?q=Zijlweg%20Haarlem&fq=type:(weg%20OR%20adres)&rows=1&fl=weergavenaam,centroide_ll"
+
+Er hoort een regel met `centroide_ll` en een punt in `POINT(lengte breedte)` uit
+te komen.
+
 ## Capcode-database: nodig voor het regiofilter
 
 Het filteren op regio werkt alleen met een capcode-database. Zonder die database
@@ -168,6 +219,16 @@ In `docker-compose.yml` onder `environment`:
 | `MQTT_USER` | gebruikersnaam op de broker | `admin_mosquitto` |
 | `MQTT_PASSWORD` | wachtwoord (via `.env`) | *invullen* |
 | `RETENTIE_DAGEN` | bewaartermijn in dagen | `7` |
+| `KAART_POSTCODE` | postcode van het middelpunt | via `.env` |
+| `KAART_LAT`, `KAART_LON` | coordinaten van het middelpunt; gaan voor op de postcode | via `.env` |
+| `KAART_STRAAL_KM` | straal van het gebied in km | `12` |
+| `KAART_MINUTEN` | venster in minuten | `60` |
+| `CARTO_KEY` | sleutel voor de basiskaart (via `.env`) | *invullen* |
+
+Blijven `KAART_POSTCODE`, `KAART_LAT` en `KAART_LON` alle drie leeg, dan blijft
+de lijstpagina gewoon werken en meldt de kaartpagina dat het middelpunt
+ontbreekt. Zonder `CARTO_KEY` werkt de kaart ook, maar ligt er een watermerk over
+de tegels.
 
 ## Publiceren
 

@@ -16,6 +16,14 @@ services:
       MQTT_PASSWORD: "${MQTT_PASSWORD:?stel MQTT_PASSWORD in via .env}"
       RETENTIE_DAGEN: "7"            # bewaartermijn; instelbaar
       DB_DIR: "/app/gegevens"          # database op de externe SSD
+      # Kaartpagina (/kaart). Alles mag leeg blijven: dan blijft de lijstpagina
+      # werken en meldt de kaartpagina dat het middelpunt ontbreekt.
+      KAART_POSTCODE: "${KAART_POSTCODE:-}"    # middelpunt via postcode
+      KAART_LAT: "${KAART_LAT:-}"              # of rechtstreeks de coordinaten
+      KAART_LON: "${KAART_LON:-}"
+      KAART_STRAAL_KM: "${KAART_STRAAL_KM:-12}"
+      KAART_MINUTEN: "${KAART_MINUTEN:-60}"
+      CARTO_KEY: "${CARTO_KEY:-}"              # sleutel voor de basiskaart
     ports:
       # Alleen op localhost; nginx schakelt door naar deze poort.
       - "127.0.0.1:8200:8000"
