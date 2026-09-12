@@ -135,7 +135,10 @@ de kleur van de dienst, gelijk aan de lijstpagina. De pagina verlevendigt elke 3
 seconden en laat het beeld daarbij staan, zodat inzoomen niet verloren gaat.
 
 Achter de knop naast de klok staan twee instellingen, allebei bewaard per
-apparaat:
+apparaat. Het paneel gaat weer dicht met dezelfde knop, met het kruisje
+rechtsboven, met de Esc-toets, en vanzelf na Toepassen of Standaard. Bij de
+straalregelaar blijft het open, anders schuift de regelaar onder de hand
+vandaan.
 
 - **Middelpunt.** Een eigen postcode, bijvoorbeeld `2011 AB`. De postcode wordt
   opgezocht bij PDOK en de kaart springt naar dat punt. Met de knop Standaard

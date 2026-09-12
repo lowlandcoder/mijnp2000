@@ -461,6 +461,7 @@ async function zetPostcode(tekst) {
   $("postcode").value = postcode;
   meldMiddelpunt("Middelpunt: " + postcode + ". Met Standaard komt het middelpunt " +
                  "uit het env-bestand terug.");
+  zetPaneel(false);   // de keuze is gemaakt
   zorgVoorKaart();
   opnieuwIndelen();
 }
@@ -475,19 +476,26 @@ function herstelMiddelpunt() {
   }
   middelpunt = standaardMiddelpunt;
   meldMiddelpunt("Middelpunt uit het env-bestand op de server.");
+  zetPaneel(false);
   zorgVoorKaart();
   opnieuwIndelen();
 }
 
 /* ---------- Knoppen ---------- */
+/* Het paneel gaat open en dicht met de knop in de balk, met het kruisje
+   rechtsboven en met de Esc-toets. */
+function zetPaneel(open) {
+  $("paneel").hidden = !open;
+  $("knopPaneel").setAttribute("aria-expanded", String(open));
+  $("knopPaneel").classList.toggle("aan", open);
+  if (kaart) setTimeout(() => kaart.invalidateSize(), 50);
+}
+
 function zetKnoppen() {
-  $("knopPaneel").addEventListener("click", () => {
-    const paneel = $("paneel");
-    const open = paneel.hidden;
-    paneel.hidden = !open;
-    $("knopPaneel").setAttribute("aria-expanded", String(open));
-    $("knopPaneel").classList.toggle("aan", open);
-    if (kaart) setTimeout(() => kaart.invalidateSize(), 50);
+  $("knopPaneel").addEventListener("click", () => zetPaneel($("paneel").hidden));
+  $("paneelSluit").addEventListener("click", () => zetPaneel(false));
+  document.addEventListener("keydown", (gebeurtenis) => {
+    if (gebeurtenis.key === "Escape" && !$("paneel").hidden) zetPaneel(false);
   });
 
   $("knopSchermvullend").addEventListener("click", () => {
@@ -573,7 +581,7 @@ async function start() {
     toonFout("Het middelpunt ontbreekt. Vul hierboven een postcode in, of zet " +
              "KAART_POSTCODE, of KAART_LAT en KAART_LON, in het env-bestand op de " +
              "server en start de container opnieuw.");
-    $("paneel").hidden = false;
+    zetPaneel(true);
     return;
   }
 
