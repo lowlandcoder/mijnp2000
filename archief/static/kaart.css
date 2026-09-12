@@ -104,6 +104,7 @@ body.kaartpagina {
 
 .kolomkaart {
   padding: 6px 9px;
+  transition: background .15s ease;
   background: var(--rij);
   border-bottom: 1px solid var(--bg);
   border-left: 3px solid var(--overig-rand);
@@ -112,9 +113,14 @@ body.kaartpagina {
 
 .kolomkaart:hover { background: var(--rij-hover); }
 
+/* De gekozen melding moet in een donkere kolom meteen opvallen: lichter vlak,
+   een rand in dezelfde oranje kleur als de cirkel op de kaart, en een breder
+   streepje in de kleur van de dienst. */
 .kolomkaart.actief {
-  background: var(--rij-hover);
-  box-shadow: inset 0 0 0 1px var(--grijs);
+  background: #3f3f3f;
+  border-left-width: 6px;
+  padding-left: 6px;
+  box-shadow: inset 0 0 0 2px var(--oranje);
 }
 
 .kolomkaart .titel {
