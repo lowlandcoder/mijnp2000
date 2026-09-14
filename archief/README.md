@@ -170,6 +170,36 @@ kaartje en bij een tik op een pin. Alleen een eigen wijziging verzet het beeld,
 dus een ander middelpunt of een andere straal. Inzoomen op een straat blijft dus behouden, ook als
 de pin van de nieuwe melding buiten beeld valt.
 
+### Lichtkrant onderin
+
+Onder de kaart staat sinds 14-09-2026 een smalle balk waar elke nieuwe melding
+een keer doorheen loopt, van rechts naar links. De tekst is de dienst gevolgd
+door de meldingtekst, bijvoorbeeld `Politie: Ongeval Letsel Zijlstraat Haarlem`,
+in dezelfde kleur als de kaartjes in de kolom. De dienst komt uit `hoofdKlasse`
+in `melding.js`, dus balk en kolom delen altijd dezelfde indeling.
+
+Hoe het werkt:
+
+- Alleen meldingen binnen de straal komen in de balk, precies wat ook op de
+  kaart en in de kolom verschijnt.
+- Komen er meerdere tegelijk, dan volgen ze elkaar op, nieuwste eerst. De
+  wachtrij is hoogstens tien lang; na een storing loopt de balk daardoor niet
+  minutenlang achter.
+- De snelheid ligt vast op ongeveer 120 beeldpunten per seconde
+  (`LICHTKRANT_SNELHEID`). De duur van de animatie wordt per melding berekend uit
+  de breedte van de balk en van de tekst, dus een lange melding gaat niet
+  sneller voorbij dan een korte.
+- Staat in het systeem "minder beweging" aan, dan schuift er niets en blijft de
+  melding acht seconden stilstaan.
+- Na het doorlopen blijft de laatste melding gedempt in beeld, tot de volgende
+  binnenkomt.
+- De schakelaar in het paneel zet de balk uit; die keuze wordt per apparaat in
+  de browser bewaard (`mijnp2000.lichtkrant`) en staat standaard aan. Staat de
+  balk uit, dan is die helemaal weg en krijgt de kaart de ruimte terug.
+
+De balk is een gewoon vak onder de kaartrij. Het lichaam van de pagina is een
+flex-kolom, dus de kaart en de kolom krimpen vanzelf mee en er valt niets weg.
+
 ### Van adres naar coordinaten
 
 De meldingen zelf bevatten geen coordinaten. De pagina haalt straat, postcode en

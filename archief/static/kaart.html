@@ -60,6 +60,16 @@
     </div>
 
     <div class="paneel-vak">
+      <span class="paneel-kop">Lichtkrant</span>
+      <label class="schakel"><input id="lichtkrantAan" type="checkbox" checked>
+        Nieuwe meldingen onderin laten voorbijkomen</label>
+      <p class="paneel-uitleg">
+        Elke nieuwe melding binnen de straal loopt een keer door de balk onderin,
+        in de kleur van de dienst. De keuze wordt op dit apparaat bewaard.
+      </p>
+    </div>
+
+    <div class="paneel-vak">
       <span class="paneel-kop">Straal rond het middelpunt</span>
       <div class="straalrij">
         <input type="range" id="straal" min="2" max="50" step="1" value="12"
@@ -84,6 +94,11 @@
       <div class="kolomlijst" id="kolomlijst"></div>
       <p class="kolom-leeg" id="kolomLeeg" hidden>Geen meldingen in dit gebied in de afgelopen 60 minuten.</p>
     </aside>
+  </div>
+
+  <!-- Lichtkrant: elke nieuwe melding loopt hier een keer doorheen -->
+  <div class="lichtkrant" id="lichtkrant" aria-live="polite">
+    <p class="lichtkrant-tekst" id="lichtkrantTekst"></p>
   </div>
 
   <script src="melding.js"></script>

@@ -32,6 +32,12 @@ const STRAAL_SLEUTEL = "mijnp2000.straal";
 const MAX_INZOOM = 16;
 const POSTCODE_SLEUTEL = "mijnp2000.postcode";
 
+/* Lichtkrant onderin: elke nieuwe melding loopt er een keer doorheen. */
+const LICHTKRANT_SLEUTEL = "mijnp2000.lichtkrant";
+const LICHTKRANT_SNELHEID = 120;   // beeldpunten per seconde
+const LICHTKRANT_STIL_MS = 8000;   // stilstaand tonen bij minder beweging
+const LICHTKRANT_MAX = 10;         // hoogstens zoveel meldingen in de wachtrij
+
 /* Kaartondergrond, gelijk aan mijnradar en mijnais. De lichte laag leest het
    best; kaart.css dimt de tegels zodat ze bij de donkere pagina passen. CARTO
    vraagt sinds augustus 2026 een sleutel: zonder sleutel werkt de kaart gewoon,
@@ -62,6 +68,9 @@ let bezig = false;
 const locaties = new Map();      // zoekterm -> {lat, lon} of null
 let bekendeSleutels = new Set(); // wat er de vorige ronde in het gebied stond
 let eersteRonde = true;          // bij het opbouwen niets als nieuw aanmerken
+let lichtkrantAan = true;        // schakelaar in het paneel, per apparaat bewaard
+const lichtkrantRij = [];        // meldingen die nog door de balk moeten
+let lichtkrantBezig = false;     // er loopt er een
 
 /* ---------- Klok en stand ---------- */
 function zetKlok() {
@@ -345,10 +354,14 @@ function toon() {
      de eerste ronde en na een eigen wijziging van straal of middelpunt gebeurt
      dat niet, want dan is alles nieuw. */
   let nieuwste = null;
+  const nieuweMeldingen = [];              // voor de lichtkrant, nieuwste eerst
   if (!eersteRonde) {
     for (const rij of inGebied) {          // de lijst staat op nieuwste eerst
       const sleutel = sleutelVan(rij.m);
-      if (!bekendeSleutels.has(sleutel)) { nieuwste = sleutel; break; }
+      if (!bekendeSleutels.has(sleutel)) {
+        if (!nieuwste) nieuwste = sleutel;
+        nieuweMeldingen.push(rij.m);
+      }
     }
   }
   bekendeSleutels = huidige;
@@ -362,6 +375,110 @@ function toon() {
   zetKolom();
   zetStand();
   if (nieuwste) schuifNaarKaartje(nieuwste);
+  if (nieuweMeldingen.length) zetInLichtkrant(nieuweMeldingen);
+}
+
+/* ================================================================
+   LICHTKRANT
+   ================================================================ */
+
+/* De naam van de dienst voor in de balk. De indeling komt uit melding.js, dus
+   dezelfde kleur en dezelfde dienst als in de kolom. */
+function dienstNaam(m) {
+  return {
+    politie: "Politie",
+    brandweer: "Brandweer",
+    ambulance: "Ambulance",
+    lifeliner: "Lifeliner",
+    overig: "Melding",
+  }[hoofdKlasse(m)] || "Melding";
+}
+
+/* Nieuwe meldingen in de wachtrij zetten, nieuwste eerst. Na een storing kunnen
+   het er veel tegelijk zijn; alles boven LICHTKRANT_MAX valt af, zodat de balk
+   niet minutenlang achterloopt. */
+function zetInLichtkrant(meldingen) {
+  if (!lichtkrantAan) return;
+  for (const m of meldingen) {
+    lichtkrantRij.push({
+      klasse: hoofdKlasse(m),
+      tekst: dienstNaam(m) + ": " + (m.bericht || "").trim(),
+    });
+  }
+  if (lichtkrantRij.length > LICHTKRANT_MAX) lichtkrantRij.length = LICHTKRANT_MAX;
+  volgendeInLichtkrant();
+}
+
+function volgendeInLichtkrant() {
+  if (lichtkrantBezig || !lichtkrantAan) return;
+  const item = lichtkrantRij.shift();
+  if (!item) return;
+
+  lichtkrantBezig = true;
+  const balk = $("lichtkrant");
+  const vak = $("lichtkrantTekst");
+
+  balk.className = "lichtkrant dienst-" + item.klasse;
+  vak.className = "lichtkrant-tekst";
+  vak.style.animationDuration = "";
+  vak.style.transform = "";
+  vak.textContent = item.tekst;
+
+  /* Minder beweging in het systeem: de melding staat stil in beeld. */
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    setTimeout(klaarInLichtkrant, LICHTKRANT_STIL_MS);
+    return;
+  }
+
+  const breedteBalk = balk.clientWidth;
+  const breedteTekst = vak.scrollWidth;
+  vak.style.setProperty("--start", breedteBalk + "px");
+  vak.style.setProperty("--eind", -breedteTekst + "px");
+  vak.style.animationDuration =
+    ((breedteBalk + breedteTekst) / LICHTKRANT_SNELHEID).toFixed(2) + "s";
+  void vak.offsetWidth;   // de animatie moet opnieuw beginnen
+  vak.classList.add("loopt");
+}
+
+function klaarInLichtkrant() {
+  const vak = $("lichtkrantTekst");
+  vak.classList.remove("loopt");
+  vak.style.animationDuration = "";
+  vak.classList.add("rust");   // de laatste melding blijft gedempt staan
+  lichtkrantBezig = false;
+  volgendeInLichtkrant();
+}
+
+function stopLichtkrant() {
+  lichtkrantRij.length = 0;
+  lichtkrantBezig = false;
+  $("lichtkrant").className = "lichtkrant";   // ook de kleur van de dienst weg
+  const vak = $("lichtkrantTekst");
+  vak.classList.remove("loopt", "rust");
+  vak.style.animationDuration = "";
+  vak.textContent = "";
+}
+
+/* De balk staat er alleen als de schakelaar aanstaat. De kaart verandert
+   daardoor van hoogte, dus Leaflet moet zijn maten opnieuw opnemen. */
+function toonLichtkrant(aan) {
+  $("lichtkrant").hidden = !aan;
+  if (!aan) stopLichtkrant();
+  if (kaart) setTimeout(() => kaart.invalidateSize(), 50);
+}
+
+function leesBewaardeLichtkrant() {
+  try {
+    const bewaard = localStorage.getItem(LICHTKRANT_SLEUTEL);
+    if (bewaard !== null) return bewaard === "1";
+  } catch (e) { /* opslag niet beschikbaar */ }
+  return true;   // standaard aan
+}
+
+function bewaarLichtkrant(aan) {
+  try {
+    localStorage.setItem(LICHTKRANT_SLEUTEL, aan ? "1" : "0");
+  } catch (e) { /* opslag niet beschikbaar */ }
 }
 
 /* ---------- Ronde: meldingen ophalen, indelen en tonen ---------- */
@@ -520,6 +637,17 @@ function zetKnoppen() {
     if (gebeurtenis.key === "Enter") zetPostcode($("postcode").value);
   });
   $("postcodeStandaard").addEventListener("click", herstelMiddelpunt);
+
+  const lichtschakelaar = $("lichtkrantAan");
+  lichtkrantAan = leesBewaardeLichtkrant();
+  lichtschakelaar.checked = lichtkrantAan;
+  toonLichtkrant(lichtkrantAan);
+  lichtschakelaar.addEventListener("change", () => {
+    lichtkrantAan = lichtschakelaar.checked;
+    bewaarLichtkrant(lichtkrantAan);
+    toonLichtkrant(lichtkrantAan);
+  });
+  $("lichtkrantTekst").addEventListener("animationend", klaarInLichtkrant);
 
   $("kolomlijst").addEventListener("click", (gebeurtenis) => {
     const kaartje = gebeurtenis.target.closest(".kolomkaart");

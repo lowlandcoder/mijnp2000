@@ -229,14 +229,76 @@ body.kaartpagina {
   color: var(--grijs);
 }
 
+/* ---------- Lichtkrant onderin ---------- */
+/* Een smalle balk waar een nieuwe melding een keer doorheen loopt, in dezelfde
+   kleuren als de kaartjes in de kolom. De balk is een gewoon vak onder de
+   kaartrij: die rij krimpt vanzelf mee, dus er valt niets weg. */
+.lichtkrant {
+  flex: none;
+  position: relative;
+  height: 32px;
+  overflow: hidden;
+  background: var(--balk);
+  border-top: 2px solid var(--overig-rand);
+}
+
+.lichtkrant-tekst {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0 10px;
+  line-height: 32px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--overig);
+  will-change: transform;
+}
+
+/* Kleur per dienst, gelijk aan .kolomkaart in de kolom. */
+.lichtkrant.dienst-politie { border-top-color: var(--politie-rand); }
+.lichtkrant.dienst-politie .lichtkrant-tekst { color: var(--politie); }
+.lichtkrant.dienst-ambulance { border-top-color: var(--ambulance-rand); }
+.lichtkrant.dienst-ambulance .lichtkrant-tekst { color: var(--ambulance); }
+.lichtkrant.dienst-brandweer { border-top-color: var(--brandweer-rand); }
+.lichtkrant.dienst-brandweer .lichtkrant-tekst { color: var(--brandweer); }
+.lichtkrant.dienst-lifeliner { border-top-color: var(--lifeliner-rand); }
+.lichtkrant.dienst-lifeliner .lichtkrant-tekst { color: var(--lifeliner); }
+
+/* Doorlopen van rechts buiten beeld naar links buiten beeld. De begin- en
+   eindstand en de duur zet kaart.js, zodat de snelheid vast blijft en een lange
+   melding niet sneller voorbijgaat dan een korte. */
+.lichtkrant-tekst.loopt {
+  animation-name: lichtkrant-loop;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes lichtkrant-loop {
+  from { transform: translateX(var(--start, 100%)); }
+  to   { transform: translateX(var(--eind, -100%)); }
+}
+
+/* Na het doorlopen blijft de laatste melding gedempt staan, tot de volgende
+   binnenkomt. */
+.lichtkrant-tekst.rust {
+  transform: none;
+  opacity: .45;
+}
+
 /* ---------- Smal scherm: kolom onder de kaart ---------- */
 @media (max-width: 800px) {
   .kaartrij { flex-direction: column; }
-  .kaartvak { flex: none; height: 55vh; }
+  .kaartvak { flex: none; height: 50vh; }
   .kolom {
     width: auto;
     flex: 1;
     border-left: none;
     border-top: 1px solid #000;
   }
+}
+
+@media (max-width: 800px) {
+  .lichtkrant { height: 28px; }
+  .lichtkrant-tekst { line-height: 28px; font-size: 13px; }
 }
