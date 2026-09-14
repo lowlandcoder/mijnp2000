@@ -236,19 +236,19 @@ body.kaartpagina {
 .lichtkrant {
   flex: none;
   position: relative;
-  height: 32px;
+  height: 64px;
   overflow: hidden;
   background: var(--balk);
-  border-top: 2px solid var(--overig-rand);
+  border-top: 3px solid var(--overig-rand);
 }
 
 .lichtkrant-tekst {
   position: absolute;
   top: 0;
   left: 0;
-  padding: 0 10px;
-  line-height: 32px;
-  font-size: 14px;
+  padding: 0 16px;
+  line-height: 61px;   /* de hoogte min de rand bovenin */
+  font-size: 28px;
   font-weight: 600;
   white-space: nowrap;
   color: var(--overig);
@@ -299,6 +299,6 @@ body.kaartpagina {
 }
 
 @media (max-width: 800px) {
-  .lichtkrant { height: 28px; }
-  .lichtkrant-tekst { line-height: 28px; font-size: 13px; }
+  .lichtkrant { height: 56px; }
+  .lichtkrant-tekst { line-height: 53px; font-size: 26px; }
 }
