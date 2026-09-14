@@ -448,6 +448,9 @@ def api_kaartinstellingen():
             "straal_km": straal,
             "minuten": minuten,
             "basiskaart": {"sleutel": CARTO_KEY},
+            # nginx zet deze kop op een ingang die alleen de kaart toont
+            # (mijnp2000map.lab023.nl). Zonder kop blijft het oude gedrag staan.
+            "alleen_kaart": request.headers.get("X-Lab023-Alleen-Kaart") == "1",
         }
     )
 

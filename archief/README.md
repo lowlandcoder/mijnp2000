@@ -332,15 +332,23 @@ zoekmachines weg:
 
 ## Openbare ingang mijnp2000map.lab023.nl
 
-Sinds 14-09-2026 is dezelfde toepassing ook zonder inloggen te openen op
+Sinds 14-09-2026 is de kaart ook zonder inloggen te openen op
 `mijnp2000map.lab023.nl`. Er komt geen tweede container bij: het serverblok
-stuurt door naar dezelfde backend op `127.0.0.1:8200`. Het verschil zit alleen
-in de afscherming.
+stuurt door naar dezelfde backend op `127.0.0.1:8200`. Het verschil zit in de
+afscherming en in wat er te zien is.
 
 | Adres | Aanmelding | Wat er te zien is |
 |---|---|---|
-| `mijnp2000.lab023.nl` | centrale aanmelding | kaart en lijst |
-| `mijnp2000map.lab023.nl` | geen | kaart en lijst |
+| `mijnp2000.lab023.nl` | centrale aanmelding | lijst op `/`, kaart op `/kaart` |
+| `mijnp2000map.lab023.nl` | geen | alleen de kaart; `/` gaat door naar `/kaart` |
+
+De lijstpagina is op de openbare ingang niet te openen: `/` en `/index.html`
+gaan door naar `/kaart` en `/script.js` geeft een 404.
+
+Het serverblok zet de kop `X-Lab023-Alleen-Kaart: 1` op elk verzoek naar de
+backend. `/api/kaartinstellingen` geeft dat door als `alleen_kaart`, waarna de
+kaartpagina de knoppen naar de lijst en naar de startpagina weglaat; beide
+zouden daar om een aanmelding vragen. Zonder die kop blijft alles bij het oude.
 
 De balk bovenin toont het adres waarop de pagina draait. Dat gaat via de
 gedeelde functie `zetAdres()` in `melding.js`, die `window.location` uitleest.
@@ -372,21 +380,24 @@ Let op bij deze ingang:
 - `/api/locaties` laat een bezoeker zoektermen omzetten via de PDOK
   Locatieserver. Dat is een openbare dienst, maar wel op naam van deze server.
   Bij misbruik is een eigen snelheidsbegrenzing op dit pad nodig.
-- De lijstpagina geeft toegang tot het hele archief, inclusief het zoekveld.
-  Zie "Afscherming en privacy".
+- De lijstpagina is hier afgesloten, maar `/api/meldingen` blijft open, want
+  de kaart heeft die nodig. Met een eigen verzoek is het archief dus wel uit te
+  lezen. Zie "Afscherming en privacy".
 
 ## Afscherming en privacy
 
-Er zijn twee ingangen: `mijnp2000.lab023.nl` achter de centrale aanmelding en
-`mijnp2000map.lab023.nl` zonder aanmelding. Beide tonen dezelfde gegevens.
+Er zijn twee ingangen: `mijnp2000.lab023.nl` achter de centrale aanmelding, met
+de lijst en de kaart, en `mijnp2000map.lab023.nl` zonder aanmelding, met alleen
+de kaart.
 
 P2000-meldingen komen van een openbare uitzending, maar bevatten soms adressen
-en af en toe namen. Op de openbare ingang is het hele archief te doorzoeken.
-Dat is een bewuste keuze en terug te draaien op twee manieren: het serverblok
-`mijnp2000map` uitschakelen, of in dat blok alleen de kaart en de bijbehorende
-API's openzetten en de lijstpagina achter de aanmelding houden. Zoekmachines
-worden hoe dan ook geweerd met `robots.txt`; dat is een richtlijn en geen
-beveiliging.
+en af en toe namen. De kaart toont alleen de meldingen van de afgelopen 60
+minuten binnen de ingestelde straal. Het archief zelf is op de openbare ingang
+niet als pagina te openen, maar `/api/meldingen` is dat wel: die is nodig voor
+de kaart en kent ook de parameters `uren` en `zoek`. Wie dat verder wil
+dichtzetten, kan in het serverblok een eigen `location = /api/meldingen`
+opnemen die alleen de vraag van de kaart doorlaat. Zoekmachines worden geweerd
+met `robots.txt`; dat is een richtlijn en geen beveiliging.
 
 ## Geheimen
 

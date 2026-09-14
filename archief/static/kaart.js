@@ -544,6 +544,15 @@ async function start() {
     return;
   }
 
+  /* Op een ingang die alleen de kaart toont, hebben de knoppen naar de lijst
+     en naar de startpagina geen zin: beide vragen om een aanmelding. */
+  if (instellingen.alleen_kaart) {
+    ["knopLijst", "knopStart"].forEach((id) => {
+      const knop = $(id);
+      if (knop) knop.remove();
+    });
+  }
+
   minuten = instellingen.minuten || 60;
   kaartSleutel = (instellingen.basiskaart || {}).sleutel || "";
   const bewaard = leesBewaardeStraal();
