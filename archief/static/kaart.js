@@ -529,6 +529,7 @@ function zetKnoppen() {
 
 /* ---------- Start ---------- */
 async function start() {
+  zetAdres();
   zetKlok();
   setInterval(zetKlok, 1000);
   zetKnoppen();

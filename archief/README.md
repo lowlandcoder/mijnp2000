@@ -22,6 +22,8 @@ MQTT; deze backend is een van de afnemers.
 - `Dockerfile`, `requirements.txt`, `docker-compose.yml` — om de container te
   bouwen en te draaien.
 - `nginx-mijnp2000.conf` — doorschakeling met centrale aanmelding.
+- `nginx-mijnp2000map.conf` — doorschakeling voor de openbare ingang
+  `mijnp2000map.lab023.nl`, zonder aanmelding; zie "Openbare ingang".
 - `data/capcodes.voorbeeld.csv` — voorbeeld van het capcode-bestand.
 
 ## Hoe het werkt
@@ -291,6 +293,11 @@ Controleren:
 
 Bij `200` is het goed; bij `302` gaat het verzoek nog langs de aanmelding.
 
+Voor de openbare ingang geldt hetzelfde bestand, dus ook daar blijven
+zoekmachines weg:
+
+    curl -s -o /dev/null -w "%{http_code}\n" https://mijnp2000map.lab023.nl/robots.txt
+
 ## Inrichting op de lab023-server
 
 1. Repository klonen (of bijwerken) op de lab023-server.
@@ -323,11 +330,63 @@ Bij `200` is het goed; bij `302` gaat het verzoek nog langs de aanmelding.
 8. Op `mijnsdr.lab023.nl` de kaart MijnP2000 activeren: in `script.js` de
    `actief: false` weghalen en het domein invullen.
 
+## Openbare ingang mijnp2000map.lab023.nl
+
+Sinds 14-09-2026 is dezelfde toepassing ook zonder inloggen te openen op
+`mijnp2000map.lab023.nl`. Er komt geen tweede container bij: het serverblok
+stuurt door naar dezelfde backend op `127.0.0.1:8200`. Het verschil zit alleen
+in de afscherming.
+
+| Adres | Aanmelding | Wat er te zien is |
+|---|---|---|
+| `mijnp2000.lab023.nl` | centrale aanmelding | kaart en lijst |
+| `mijnp2000map.lab023.nl` | geen | kaart en lijst |
+
+De balk bovenin toont het adres waarop de pagina draait. Dat gaat via de
+gedeelde functie `zetAdres()` in `melding.js`, die `window.location` uitleest.
+
+Inrichten op de server:
+
+1. DNS-regel voor `mijnp2000map.lab023.nl` aanmaken, net als bij de andere
+   subdomeinen. Controle: `getent hosts mijnp2000map.lab023.nl`.
+2. Tijdelijk serverblok met alleen poort 80 plaatsen en activeren, zodat
+   certbot het domein kan bereiken.
+3. Certificaat aanvragen:
+
+       sudo certbot certonly --nginx -d mijnp2000map.lab023.nl
+
+4. Het echte serverblok plaatsen (`nginx-mijnp2000map.conf`, in de vorm met een
+   443-blok), controleren en herladen:
+
+       sudo nginx -t && sudo systemctl reload nginx
+
+Controleren:
+
+    curl -s -o /dev/null -w "%{http_code}\n" https://mijnp2000map.lab023.nl/kaart
+
+Let op bij deze ingang:
+
+- De sleutel `CARTO_KEY` komt via `/api/kaartinstellingen` mee naar de browser
+  en is daarmee openbaar. Beperk de sleutel bij CARTO tot de eigen domeinen,
+  of neem een aparte sleutel voor dit subdomein.
+- `/api/locaties` laat een bezoeker zoektermen omzetten via de PDOK
+  Locatieserver. Dat is een openbare dienst, maar wel op naam van deze server.
+  Bij misbruik is een eigen snelheidsbegrenzing op dit pad nodig.
+- De lijstpagina geeft toegang tot het hele archief, inclusief het zoekveld.
+  Zie "Afscherming en privacy".
+
 ## Afscherming en privacy
 
-De pagina loopt via de centrale aanmelding en is voor eigen gebruik.
-P2000-meldingen bevatten soms adressen en af en toe namen. Niet breder delen of
-publiceren.
+Er zijn twee ingangen: `mijnp2000.lab023.nl` achter de centrale aanmelding en
+`mijnp2000map.lab023.nl` zonder aanmelding. Beide tonen dezelfde gegevens.
+
+P2000-meldingen komen van een openbare uitzending, maar bevatten soms adressen
+en af en toe namen. Op de openbare ingang is het hele archief te doorzoeken.
+Dat is een bewuste keuze en terug te draaien op twee manieren: het serverblok
+`mijnp2000map` uitschakelen, of in dat blok alleen de kaart en de bijbehorende
+API's openzetten en de lijstpagina achter de aanmelding houden. Zoekmachines
+worden hoe dan ook geweerd met `robots.txt`; dat is een richtlijn en geen
+beveiliging.
 
 ## Geheimen
 

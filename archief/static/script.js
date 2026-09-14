@@ -411,6 +411,7 @@ $("plaatsAan").addEventListener("change", () => { bewaarPlaatsInstellingen(); ha
 $("plaatsen").addEventListener("input", () => { bewaarPlaatsInstellingen(); haalMeldingen(); });
 
 /* ---------- Opbouwen en verversen ---------- */
+zetAdres();
 zetKlok();
 setInterval(zetKlok, 1000);
 setInterval(werkGeledenBij, 15000);

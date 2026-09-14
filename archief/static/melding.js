@@ -4,6 +4,18 @@
 // kaart). Het bevat alleen functies en geen code die de pagina aanraakt, zodat
 // het in beide pagina's voor het eigen script kan worden ingeladen.
 
+/* ---------- Adres in de balk ---------- */
+/* De balk toont het adres waarop de pagina op dat moment draait. Dat verschilt
+   per subdomein: mijnp2000.lab023.nl is de afgeschermde ingang en
+   mijnp2000map.lab023.nl de openbare. Ontbreekt het element, dan gebeurt er
+   niets en blijft de tekst uit de pagina staan. */
+function zetAdres() {
+  const vak = document.getElementById("adres");
+  if (!vak) return;
+  const pad = window.location.pathname.replace(/\/$/, "");
+  vak.textContent = window.location.host + pad;
+}
+
 /* ---------- Kleur per dienst ---------- */
 function dienstKlasse(tekst) {
   const t = (tekst || "").toLowerCase();
